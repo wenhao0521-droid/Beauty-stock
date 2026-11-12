@@ -14,8 +14,8 @@
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
-    body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
+    body { font-family: 'Noto Sans TC', 'Noto Sans JP', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -31,7 +31,7 @@
         </div>
         <div>
           <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 leading-tight">美妝與日用品庫存管家</h1>
-          <p class="text-[11px] text-slate-400 hidden sm:block">免金鑰拍瓶身辨識・PAO開封倒數・庫存追蹤</p>
+          <p class="text-[11px] text-slate-400 hidden sm:block">智慧品牌/品名拆解・PAO開封倒數・庫存追蹤</p>
         </div>
       </div>
 
@@ -121,7 +121,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
         <div class="sm:col-span-5 relative">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-          <input id="search-input" type="text" oninput="renderItems()" placeholder="搜尋品牌、品名或條碼..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400" />
+          <input id="search-input" type="text" oninput="renderItems()" placeholder="搜尋中/日/英品牌、品名或條碼..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400" />
         </div>
         <div class="sm:col-span-3">
           <select id="filter-status" onchange="renderItems()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none">
@@ -171,7 +171,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
             <span class="text-xs font-semibold text-slate-700 block">免金鑰智慧建檔</span>
-            <span class="text-[11px] text-slate-400">拍瓶身文字辨識(繁中/日/英)，或掃條碼</span>
+            <span class="text-[11px] text-slate-400">依字體大小與關鍵字自動區分品牌與品名</span>
           </div>
           <div class="flex items-center gap-1.5">
             <label class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-medium flex items-center gap-1.5 hover:opacity-95 shadow-xs cursor-pointer">
@@ -214,12 +214,15 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">品牌名稱</label>
-            <input id="item-brand" type="text" placeholder="例：資生堂、花王、理膚寶水" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-medium text-slate-600">品牌名稱</label>
+              <button type="button" onclick="swapBrandAndName()" class="text-[11px] text-indigo-600 hover:underline flex items-center gap-0.5" title="若品牌與品名顛倒可一鍵互換">⇄ 互換</button>
+            </div>
+            <input id="item-brand" type="text" placeholder="例：SHISEIDO、肌研" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">商品名稱 *</label>
-            <input id="item-name" type="text" required placeholder="例：極潤保濕化妝水" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
+            <input id="item-name" type="text" required placeholder="例：極潤ヒアルロン液 170ml" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
           </div>
         </div>
 
@@ -328,7 +331,7 @@
         <h2 class="text-lg font-bold text-slate-900">資料備份與還原</h2>
         <button onclick="closeBackupModal()" class="p-1.5 rounded-full hover:bg-slate-100 text-slate-500"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-      <p class="text-xs text-slate-500 leading-relaxed">所有資料（包含您建檔的自訂條碼記憶庫）目前安全儲存在本機瀏覽器中。更換手機前建議匯出 JSON 備份檔。</p>
+      <p class="text-xs text-slate-500 leading-relaxed">所有資料（包含您建檔的自訂條碼與自學習品牌庫）目前安全儲存在本機瀏覽器中。更換手機前建議匯出 JSON 備份檔。</p>
       <div class="space-y-2.5">
         <button onclick="exportData()" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800">匯出 JSON 備份檔</button>
         <label class="block w-full py-2.5 rounded-xl border border-slate-200 text-center text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
@@ -350,85 +353,100 @@
     const LOGS_KEY = 'beauty_stock_logs_v2';
     const EMPTIES_KEY = 'beauty_stock_empties_v2';
     const BARCODE_CACHE_KEY = 'beauty_stock_barcode_dict_v1';
+    const CUSTOM_BRANDS_KEY = 'beauty_stock_custom_brands_v1';
 
     let items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let logs = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
     let emptiesCount = parseInt(localStorage.getItem(EMPTIES_KEY) || '0', 10);
     let customBarcodeDict = JSON.parse(localStorage.getItem(BARCODE_CACHE_KEY)) || {};
+    let customBrands = JSON.parse(localStorage.getItem(CUSTOM_BRANDS_KEY)) || [];
     let currentCategory = '全部';
     let html5QrCode = null;
+    let lastOcrLines = [];
 
-    // 台日歐美常見美妝與日用品品牌對照庫（自動從 OCR 文字中精準拆出品牌）
     const BRAND_DICTIONARY = [
-      { keys: ['SHISEIDO', '資生堂'], brand: '資生堂 SHISEIDO' },
-      { keys: ['KAO', '花王'], brand: '花王 Kao' },
-      { keys: ['KOSE', 'KOSÉ', '高絲', '雪肌精'], brand: '高絲 KOSÉ' },
-      { keys: ['KANEBO', '佳麗寶'], brand: '佳麗寶 Kanebo' },
-      { keys: ['HADA LABO', '肌研', 'ROHTO', '樂敦'], brand: '肌研 / 樂敦' },
-      { keys: ['CUREL', 'CURÉL', '珂潤'], brand: '珂潤 Curél' },
-      { keys: ['BIORE', 'BIORÉ', '蜜妮'], brand: '蜜妮 Bioré' },
-      { keys: ['SENKA', '專科'], brand: '專科 SENKA' },
-      { keys: ['ANESSA', '安耐曬'], brand: '安耐曬 ANESSA' },
-      { keys: ['ALLIE'], brand: 'ALLIE' },
-      { keys: ['SOFINA', '蘇菲娜'], brand: '蘇菲娜 SOFINA' },
-      { keys: ['ELIXIR', '怡麗絲爾'], brand: '怡麗絲爾 ELIXIR' },
+      { keys: ['SHISEIDO', '資生堂', 'シセイドウ'], brand: 'SHISEIDO 資生堂' },
+      { keys: ['KAO', '花王', 'カオー'], brand: 'Kao 花王' },
+      { keys: ['KOSE', 'KOSÉ', '高絲', 'コーセー', '雪肌精'], brand: 'KOSÉ 高絲' },
+      { keys: ['KANEBO', '佳麗寶', 'カネボウ'], brand: 'Kanebo 佳麗寶' },
+      { keys: ['HADA LABO', '肌研', 'ハダラボ', 'ROHTO', 'ロート'], brand: 'Hada Labo 肌研' },
+      { keys: ['CUREL', 'CURÉL', '珂潤', 'キュレル'], brand: 'Curél 珂潤' },
+      { keys: ['BIORE', 'BIORÉ', '蜜妮', 'ビオレ'], brand: 'Bioré 蜜妮' },
+      { keys: ['SENKA', '專科', 'センカ'], brand: 'SENKA 專科' },
+      { keys: ['ANESSA', '安耐曬', 'アネッサ'], brand: 'ANESSA 安耐曬' },
+      { keys: ['ALLIE', 'アリィー'], brand: 'ALLIE' },
+      { keys: ['SOFINA', '蘇菲娜', 'ソフィーナ'], brand: 'SOFINA 蘇菲娜' },
+      { keys: ['ELIXIR', '怡麗絲爾', 'エリクシール'], brand: 'ELIXIR 怡麗絲爾' },
       { keys: ['DHC'], brand: 'DHC' },
-      { keys: ['FANCL', '芳珂'], brand: 'FANCL' },
-      { keys: ['MUJI', '無印良品'], brand: '無印良品 MUJI' },
+      { keys: ['FANCL', '芳珂', 'ファンケル'], brand: 'FANCL' },
+      { keys: ['MUJI', '無印良品'], brand: 'MUJI 無印良品' },
       { keys: ['SK-II', 'SKII'], brand: 'SK-II' },
-      { keys: ['CANMAKE', '井田'], brand: 'CANMAKE' },
-      { keys: ['CEZANNE', '塞尚'], brand: 'CEZANNE' },
-      { keys: ['KATE', '凱婷'], brand: 'KATE 凱婷' },
-      { keys: ['INTEGRATE'], brand: 'INTEGRATE' },
-      { keys: ['MAQUILLAGE', '心機'], brand: '心機彩妝 MAQuillAGE' },
-      { keys: ['KISSME', '花漾美姬'], brand: 'KISSME 花漾美姬' },
-      { keys: ['EXCEL'], brand: 'excel' },
-      { keys: ['LA ROCHE-POSAY', 'LA ROCHE POSAY', '理膚寶水'], brand: '理膚寶水' },
-      { keys: ['AVENE', 'AVÈNE', '雅漾'], brand: '雅漾 Avène' },
-      { keys: ['CERAVE', '適樂膚'], brand: '適樂膚 CeraVe' },
-      { keys: ['VICHY', '薇姿'], brand: '薇姿 VICHY' },
-      { keys: ['BIODERMA', '貝膚黛瑪'], brand: '貝膚黛瑪 BIODERMA' },
-      { keys: ['CETAPHIL', '舒特膚'], brand: '舒特膚 Cetaphil' },
-      { keys: ['DR.WU', 'DRWU', '達爾膚'], brand: 'DR.WU 達爾膚' },
-      { keys: ['NEOGENCE', '霓淨思'], brand: '霓淨思 Neogence' },
-      { keys: ['PAULA\'S CHOICE', '寶拉珍選'], brand: '寶拉珍選' },
-      { keys: ['KIEHL\'S', 'KIEHLS', '契爾氏'], brand: '契爾氏 Kiehl\'s' },
-      { keys: ['LANCOME', 'LANCÔME', '蘭蔻'], brand: '蘭蔻 LANCÔME' },
-      { keys: ['ESTEE LAUDER', '雅詩蘭黛'], brand: '雅詩蘭黛' },
-      { keys: ['CLINIQUE', '倩碧'], brand: '倩碧 CLINIQUE' },
-      { keys: ['ORIGINS', '品木宣言'], brand: '品木宣言 ORIGINS' },
-      { keys: ['CLARINS', '克蘭詩'], brand: '克蘭詩 CLARINS' },
-      { keys: ['L\'OCCITANE', 'LOCCITANE', '歐舒丹'], brand: '歐舒丹 L\'OCCITANE' },
-      { keys: ['INNISFREE', '悅詩風吟'], brand: 'innisfree' },
-      { keys: ['LANEIGE', '蘭芝'], brand: '蘭芝 LANEIGE' },
-      { keys: ['NIVEA', '妮維雅'], brand: '妮維雅 NIVEA' },
-      { keys: ['VASELINE', '凡士林'], brand: '凡士林 Vaseline' },
-      { keys: ['DOVE', '多芬'], brand: '多芬 Dove' },
-      { keys: ['LUX', '麗仕'], brand: '麗仕 LUX' },
-      { keys: ['PANTENE', '潘婷'], brand: '潘婷 PANTENE' },
-      { keys: ['TSUBAKI', '思波綺'], brand: '思波綺 TSUBAKI' },
-      { keys: ['FINO'], brand: 'fino' },
-      { keys: ['L\'OREAL', 'LOREAL', '巴黎萊雅'], brand: '巴黎萊雅' },
-      { keys: ['MAYBELLINE', '媚比琳'], brand: '媚比琳 Maybelline' },
+      { keys: ['CANMAKE', 'キャンメイク'], brand: 'CANMAKE' },
+      { keys: ['CEZANNE', 'セザンヌ'], brand: 'CEZANNE' },
+      { keys: ['KATE', 'ケイト'], brand: 'KATE' },
+      { keys: ['INTEGRATE', 'インテグレート'], brand: 'INTEGRATE' },
+      { keys: ['MAQUILLAGE', 'マキアージュ'], brand: 'MAQuillAGE' },
+      { keys: ['KISSME', 'ヒロインメイク'], brand: 'KISSME' },
+      { keys: ['EXCEL', 'エクセル'], brand: 'excel' },
+      { keys: ['OBAGI', 'オバジ'], brand: 'Obagi' },
+      { keys: ['MELANO CC', 'メラノCC'], brand: 'Melano CC' },
+      { keys: ['MINON', 'ミノン'], brand: 'MINON' },
+      { keys: ['IHADA', 'イハダ'], brand: 'IHADA' },
+      { keys: ['DECORTÉ', 'DECORTE', 'コスメデコルテ', '黛珂'], brand: 'DECORTÉ' },
+      { keys: ['ALBION', 'アルビオン'], brand: 'ALBION' },
+      { keys: ['IPSA', 'イプサ'], brand: 'IPSA' },
+      { keys: ['THREE'], brand: 'THREE' },
+      { keys: ['SUQQU'], brand: 'SUQQU' },
+      { keys: ['RMK'], brand: 'RMK' },
+      { keys: ['ORBIS', 'オルビス'], brand: 'ORBIS' },
+      { keys: ['ATTENIR', 'アテニア'], brand: 'Attenir' },
+      { keys: ['LA ROCHE-POSAY', 'LA ROCHE POSAY', '理膚寶水', 'ラロッシュポゼ'], brand: 'La Roche-Posay 理膚寶水' },
+      { keys: ['AVENE', 'AVÈNE', '雅漾', 'アベンヌ'], brand: 'Avène 雅漾' },
+      { keys: ['CERAVE', '適樂膚', 'セラヴィ'], brand: 'CeraVe 適樂膚' },
+      { keys: ['VICHY', '薇姿'], brand: 'VICHY 薇姿' },
+      { keys: ['BIODERMA', '貝膚黛瑪', 'ビオデルマ'], brand: 'BIODERMA 貝膚黛瑪' },
+      { keys: ['CETAPHIL', '舒特膚'], brand: 'Cetaphil 舒特膚' },
+      { keys: ['DR.WU', 'DRWU', '達爾膚'], brand: 'DR.WU' },
+      { keys: ['NEOGENCE', '霓淨思'], brand: 'Neogence 霓淨思' },
+      { keys: ['PAULA\'S CHOICE', '寶拉珍選'], brand: 'Paula\'s Choice' },
+      { keys: ['KIEHL\'S', 'KIEHLS', '契爾氏', 'キールズ'], brand: 'Kiehl\'s 契爾氏' },
+      { keys: ['LANCOME', 'LANCÔME', '蘭蔻', 'ランコム'], brand: 'LANCÔME 蘭蔻' },
+      { keys: ['ESTEE LAUDER', '雅詩蘭黛'], brand: 'Estée Lauder 雅詩蘭黛' },
+      { keys: ['CLINIQUE', '倩碧', 'クリニーク'], brand: 'CLINIQUE 倩碧' },
+      { keys: ['ORIGINS', '品木宣言'], brand: 'ORIGINS 品木宣言' },
+      { keys: ['CLARINS', '克蘭詩', 'クラランス'], brand: 'CLARINS 克蘭詩' },
+      { keys: ['L\'OCCITANE', 'LOCCITANE', '歐舒丹', 'ロクシタン'], brand: 'L\'OCCITANE 歐舒丹' },
+      { keys: ['INNISFREE', 'イニスフリー'], brand: 'innisfree' },
+      { keys: ['LANEIGE', '蘭芝', 'ラネージュ'], brand: 'LANEIGE 蘭芝' },
+      { keys: ['NIVEA', '妮維雅', 'ニベア'], brand: 'NIVEA 妮維雅' },
+      { keys: ['VASELINE', '凡士林', 'ヴァセリン'], brand: 'Vaseline 凡士林' },
+      { keys: ['DOVE', '多芬', 'ダヴ'], brand: 'Dove 多芬' },
+      { keys: ['LUX', '麗仕', 'ラックス'], brand: 'LUX 麗仕' },
+      { keys: ['PANTENE', '潘婷', 'パンテーン'], brand: 'PANTENE 潘婷' },
+      { keys: ['TSUBAKI', '思波綺', 'ツバキ'], brand: 'TSUBAKI 思波綺' },
+      { keys: ['FINO', 'フィーノ'], brand: 'fino' },
+      { keys: ['L\'OREAL', 'LOREAL', '巴黎萊雅', 'ロレアル'], brand: 'L\'Oréal 巴黎萊雅' },
+      { keys: ['MAYBELLINE', '媚比琳', 'メイベリン'], brand: 'Maybelline 媚比琳' },
       { keys: ['1028'], brand: '1028' },
       { keys: ['SOLONE'], brand: 'Solone' },
       { keys: ['我的美麗日記'], brand: '我的美麗日記' },
       { keys: ['森田藥粧', 'DR.JOU'], brand: '森田藥粧' },
-      { keys: ['專科'], brand: '專科' },
       { keys: ['雪芙蘭', 'CELLINA'], brand: '雪芙蘭' },
       { keys: ['廣源良'], brand: '廣源良' },
       { keys: ['黑人', 'DARLIE', '好來'], brand: '好來 DARLIE' },
-      { keys: ['高露潔', 'COLGATE'], brand: '高露潔 Colgate' },
-      { keys: ['舒酸定', 'SENSODYNE'], brand: '舒酸定' },
-      { keys: ['施巴', 'SEBAMED'], brand: '施巴 sebamed' },
-      { keys: ['嬌生', 'JOHNSON'], brand: '嬌生' },
-      { keys: ['舒潔', 'KLEENEX'], brand: '舒潔 Kleenex' },
+      { keys: ['高露潔', 'COLGATE'], brand: 'Colgate 高露潔' },
+      { keys: ['舒酸定', 'SENSODYNE', 'シュミテクト'], brand: 'Sensodyne 舒酸定' },
+      { keys: ['施巴', 'SEBAMED'], brand: 'sebamed 施巴' },
+      { keys: ['嬌生', 'JOHNSON'], brand: 'Johnson\'s 嬌生' },
+      { keys: ['舒潔', 'KLEENEX'], brand: 'Kleenex 舒潔' },
       { keys: ['五月花'], brand: '五月花' },
       { keys: ['得意'], brand: '得意' },
       { keys: ['春風'], brand: '春風' },
       { keys: ['白蘭'], brand: '白蘭' },
-      { keys: ['一匙靈', 'ATTACK'], brand: '一匙靈 Attack' },
-      { keys: ['ARIEL'], brand: 'ARIEL' }
+      { keys: ['一匙靈', 'ATTACK', 'アタック'], brand: 'Attack 一匙靈' },
+      { keys: ['ARIEL', 'アリエール'], brand: 'ARIEL' },
+      { keys: ['LION', '獅王', 'ライオン'], brand: 'LION 獅王' },
+      { keys: ['KOBAYASHI', '小林製藥', '小林製薬'], brand: '小林製藥' }
     ];
 
     function persist() {
@@ -436,6 +454,7 @@
       localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
       localStorage.setItem(EMPTIES_KEY, String(emptiesCount));
       localStorage.setItem(BARCODE_CACHE_KEY, JSON.stringify(customBarcodeDict));
+      localStorage.setItem(CUSTOM_BRANDS_KEY, JSON.stringify(customBrands));
       renderAll();
     }
 
@@ -449,7 +468,14 @@
       if (logs.length > 100) logs.pop();
     }
 
-    // 預處理照片：轉灰階、提高對比度並縮放至最適合 OCR 辨識的尺寸
+    function swapBrandAndName() {
+      const b = document.getElementById('item-brand');
+      const n = document.getElementById('item-name');
+      const tmp = b.value;
+      b.value = n.value;
+      n.value = tmp;
+    }
+
     function preprocessImageForOcr(file, maxDim = 1280) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -467,7 +493,7 @@
             const ctx = canvas.getContext('2d');
             ctx.filter = 'contrast(1.25) grayscale(1)';
             ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.9));
+            resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.9), imgHeight: h });
           };
           img.onerror = reject;
           img.src = e.target.result;
@@ -477,49 +503,99 @@
       });
     }
 
-    // 智慧解析 OCR 辨識出的多行文字，拆出品牌、品名與推測分類
-    function parseOcrLines(rawText) {
-      const lines = rawText
-        .split(/\r?\n/)
-        .map(line => line.replace(/[|｜_~`^<>[\]{}]/g, '').trim())
-        .filter(line => line.length >= 2 && !/^[\d\s.,/-]+$/.test(line));
+    // 結合「字塊位置(top)、字體高度(height)、語意關鍵字(品類/容量)與品牌庫」智慧區分品牌與品名
+    function analyzeOcrStructure(ocrData, imgHeight) {
+      const rawLines = ocrData?.lines || [];
+      const PRODUCT_TYPE_REGEX = /(化妝水|精華|乳液|面霜|修復霜|防曬|卸妝|洗面|潔顏|面膜|眼霜|凝露|口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|化粧水|美容液|クリーム|日焼け止め|クレンジング|洗顔|パック|リップ|ファンデーション|パウダー|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|LOTION|SERUM|ESSENCE|CREAM|EMULSION|SUNSCREEN|CLEANSER|MASK|BAUME|BALM|GEL|TONER|LIP|FOUNDATION|MASCARA|POWDER|SHAMPOO|CONDITIONER|WASH)/i;
+      const SPEC_ONLY_REGEX = /^(\d+\s*(ml|g|mg|oz|片|入|抽|枚)|SPF\d+|PA\++|NET\s*WT\.?)$/i;
 
-      const fullUpper = lines.join(' ').toUpperCase();
+      const structured = rawLines
+        .map(l => {
+          const text = (l.text || '').replace(/[|｜_~`^<>[\]{}]/g, '').replace(/\s+/g, ' ').trim();
+          const bbox = l.bbox || { y0: 0, y1: 20 };
+          const height = Math.max(1, bbox.y1 - bbox.y0);
+          const relTop = imgHeight > 0 ? bbox.y0 / imgHeight : 0.5;
+          return { text, height, relTop };
+        })
+        .filter(item => item.text.length >= 2 && !/^[\d\s.,/-]+$/.test(item.text));
+
       let detectedBrand = '';
+      let matchedBrandKey = '';
 
-      for (const entry of BRAND_DICTIONARY) {
-        if (entry.keys.some(k => fullUpper.includes(k.toUpperCase()))) {
-          detectedBrand = entry.brand;
+      // 1. 先比對使用者自學習品牌庫 + 內建台日歐美品牌庫
+      const allTextUpper = structured.map(s => s.text).join(' ').toUpperCase();
+      for (const cb of customBrands) {
+        if (cb && allTextUpper.includes(cb.toUpperCase())) {
+          detectedBrand = cb;
+          matchedBrandKey = cb.toUpperCase();
           break;
         }
       }
+      if (!detectedBrand) {
+        for (const entry of BRAND_DICTIONARY) {
+          const hit = entry.keys.find(k => allTextUpper.includes(k.toUpperCase()));
+          if (hit) {
+            detectedBrand = entry.brand;
+            matchedBrandKey = hit.toUpperCase();
+            break;
+          }
+        }
+      }
 
-      // 過濾掉與品牌重複的行，組合最可能的商品主標題（通常在前幾行且字數適中）
-      const contentLines = lines.filter(line => {
-        const up = line.toUpperCase();
-        if (detectedBrand && detectedBrand.toUpperCase().split(' ').some(part => part.length > 1 && up === part)) {
+      // 2. 若字典未命中，依據「包裝設計學」推測品牌：位於圖片上方(relTop < 0.35)、不含品類詞/容量詞、字數較短的獨立標題
+      if (!detectedBrand && structured.length >= 2) {
+        const brandCandidate = structured.find(s =>
+          s.relTop < 0.38 &&
+          s.text.length <= 22 &&
+          !PRODUCT_TYPE_REGEX.test(s.text) &&
+          !SPEC_ONLY_REGEX.test(s.text)
+        );
+        if (brandCandidate) {
+          detectedBrand = brandCandidate.text;
+          matchedBrandKey = brandCandidate.text.toUpperCase();
+        }
+      }
+
+      // 3. 挑選「商品名稱」：排除已認出的品牌行與純容量標示，優先挑選「含品類關鍵字」或「字體最大(height最高)」的行
+      const nameCandidates = structured.filter(s => {
+        const up = s.text.toUpperCase();
+        if (matchedBrandKey && (up === matchedBrandKey || (matchedBrandKey.length >= 4 && up.includes(matchedBrandKey) && s.text.length <= matchedBrandKey.length + 3))) {
           return false;
         }
+        if (SPEC_ONLY_REGEX.test(s.text)) return false;
         return true;
       });
 
-      const suggestedName = contentLines.slice(0, 2).join(' ').slice(0, 45);
+      // 為每個候選行計算「像品名」的分數（字體越大 + 含有產品型態詞分數越高）
+      const scoredNames = [...nameCandidates].sort((a, b) => {
+        const scoreA = a.height + (PRODUCT_TYPE_REGEX.test(a.text) ? 40 : 0);
+        const scoreB = b.height + (PRODUCT_TYPE_REGEX.test(b.text) ? 40 : 0);
+        return scoreB - scoreA;
+      });
 
-      // 依據關鍵字自動判斷分類
-      const joined = lines.join(' ');
+      const primaryName = scoredNames[0]?.text || '';
+      const secondarySpec = structured.find(s => /\d+\s*(ml|g|片|入|枚)/i.test(s.text) && !primaryName.includes(s.text))?.text || '';
+      const suggestedName = [primaryName, secondarySpec].filter(Boolean).join(' ').slice(0, 65);
+
+      // 4. 推測商品分類
+      const joined = structured.map(s => s.text).join(' ');
       let detectedCategory = '';
-      if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉/.test(joined)) {
+      if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|リップ|ファンデーション|パウダー|アイシャドウ|マスカラ|チーク|下地|LIP|FOUNDATION|MASCARA|POWDER|BLUSH/i.test(joined)) {
         detectedCategory = '化妝品';
-      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊/.test(joined)) {
+      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤|SHAMPOO|CONDITIONER|BODY WASH|TOOTHPASTE|DETERGENT/i.test(joined)) {
         detectedCategory = '日用品';
-      } else if (/化妝水|精華|乳液|面霜|修復霜|防曬|卸妝|洗面|潔顏|面膜|眼霜|凝露|保濕|修護/.test(joined)) {
+      } else if (PRODUCT_TYPE_REGEX.test(joined)) {
         detectedCategory = '保養品';
       }
 
-      return { detectedBrand, suggestedName, detectedCategory, lines: lines.slice(0, 8) };
+      return {
+        detectedBrand,
+        suggestedName,
+        detectedCategory,
+        lines: structured.map(s => s.text).slice(0, 10)
+      };
     }
 
-    // 免 API Key 離線內建 Tesseract OCR 主流程
     async function handleOfflineOcrCapture(event) {
       const file = event.target.files[0];
       event.target.value = '';
@@ -528,28 +604,28 @@
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.remove('hidden');
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-900 border border-emerald-200 flex items-center gap-2';
-      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full shrink-0"></span> <span id="ocr-progress-text">正在準備離線文字辨識引擎（初次載入繁中/日文語料約需數秒）...</span>`;
+      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full shrink-0"></span> <span id="ocr-progress-text">正在啟動中/日/英離線文字辨識引擎...</span>`;
 
       try {
-        const processedImg = await preprocessImageForOcr(file);
+        const { dataUrl, imgHeight } = await preprocessImageForOcr(file);
         const result = await Tesseract.recognize(
-          processedImg,
+          dataUrl,
           'chi_tra+jpn+eng',
           {
             logger: (m) => {
               const progEl = document.getElementById('ocr-progress-text');
               if (!progEl) return;
               if (m.status === 'recognizing text') {
-                progEl.textContent = `正在辨識包裝文字... ${Math.round((m.progress || 0) * 100)}%`;
+                progEl.textContent = `正在分析包裝版面與文字... ${Math.round((m.progress || 0) * 100)}%`;
               } else if (m.status && m.status.includes('loading')) {
-                progEl.textContent = `正在下載繁中/日文離線語料庫（僅首次需要，之後免網路秒開）...`;
+                progEl.textContent = `正在載入中/日/英語料庫（僅首次需要，之後全離線秒開）...`;
               }
             }
           }
         );
 
-        const rawText = result?.data?.text || '';
-        const parsed = parseOcrLines(rawText);
+        const parsed = analyzeOcrStructure(result?.data, imgHeight);
+        lastOcrLines = parsed.lines;
 
         if (parsed.detectedCategory) {
           document.getElementById('item-category').value = parsed.detectedCategory;
@@ -563,35 +639,39 @@
 
         if (parsed.lines.length > 0) {
           const chipsHtml = parsed.lines.map((line, idx) => `
-            <button type="button" onclick="appendOcrChipToName(${idx})" data-ocr-line="${line.replace(/"/g, '&quot;')}" class="ocr-chip px-2 py-1 rounded-lg bg-white border border-emerald-300 text-emerald-900 text-[11px] hover:bg-emerald-100 text-left">
-              + ${line}
-            </button>
+            <div class="inline-flex items-center rounded-lg bg-white border border-emerald-300 overflow-hidden text-[11px]">
+              <span class="px-2 py-1 text-slate-800 max-w-[155px] truncate">${line}</span>
+              <button type="button" onclick="setOcrToField(${idx}, 'brand')" class="px-1.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border-l border-emerald-200 font-medium" title="設為品牌">品牌</button>
+              <button type="button" onclick="setOcrToField(${idx}, 'name')" class="px-1.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border-l border-emerald-200 font-medium" title="加入品名">+品名</button>
+            </div>
           `).join('');
 
           statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-900 border border-emerald-200 space-y-2';
           statusBox.innerHTML = `
-            <div>✅ <strong>瓶身文字辨識完成！</strong>已自動填入，若需補充品名可點擊下方抓到的文字標籤加入：</div>
-            <div class="flex flex-wrap gap-1">${chipsHtml}</div>
+            <div>✅ <strong>已完成品牌與品名自動拆解！</strong>若需微調，可點上方「⇄ 互換」或點選下方字樣指定：</div>
+            <div class="flex flex-wrap gap-1.5">${chipsHtml}</div>
           `;
         } else {
           statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200';
-          statusBox.innerHTML = `⚠️ 照片光線反光或文字較小未抓到清晰字樣，建議靠近包裝正面重拍一次，或直接手動輸入品名。`;
+          statusBox.innerHTML = `⚠️ 照片反光或字體較小未抓到清晰字樣，建議靠近包裝文字區重拍一次，或直接輸入原文品名。`;
         }
       } catch (err) {
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-rose-50 text-rose-800 border border-rose-200';
-        statusBox.innerHTML = `❌ 辨識過程發生錯誤，請確認網路暢通（首次使用需下載語言包）後再試一次。`;
+        statusBox.innerHTML = `❌ 辨識過程發生錯誤，請確認網路暢通（首次使用需載入語言包）後再試一次。`;
       }
     }
 
-    function appendOcrChipToName(idx) {
-      const chips = document.querySelectorAll('.ocr-chip');
-      const text = chips[idx]?.dataset?.ocrLine;
+    function setOcrToField(idx, target) {
+      const text = lastOcrLines[idx];
       if (!text) return;
-      const nameInput = document.getElementById('item-name');
-      nameInput.value = nameInput.value ? `${nameInput.value} ${text}` : text;
+      if (target === 'brand') {
+        document.getElementById('item-brand').value = text;
+      } else {
+        const nameInput = document.getElementById('item-name');
+        nameInput.value = nameInput.value ? `${nameInput.value} ${text}` : text;
+      }
     }
 
-    // 查詢開放資料庫
     async function fetchProductFromApis(cleanCode) {
       const openFactsUrls = [
         `https://world.openbeautyfacts.org/api/v2/product/${cleanCode}.json`,
@@ -606,7 +686,7 @@
           const data = await res.json();
           if (data.status === 1 && data.product) {
             const p = data.product;
-            const pName = p.product_name_zh || p.product_name_tw || p.product_name_ja || p.product_name || p.generic_name || '';
+            const pName = p.product_name_ja || p.product_name_zh || p.product_name_tw || p.product_name || p.generic_name || '';
             const pBrand = p.brands ? p.brands.split(',')[0].trim() : '';
             if (pName || pBrand) return { brand: pBrand, name: pName };
           }
@@ -663,7 +743,7 @@
       }
 
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200';
-      statusBox.innerHTML = `⚠️ 開放庫暫無條碼 <strong>${cleanCode}</strong>，請直接點擊上方綠色的 <strong>「拍瓶身辨識」</strong> 拍包裝正面文字，儲存後即可永久綁定此條碼！`;
+      statusBox.innerHTML = `⚠️ 開放庫暫無條碼 <strong>${cleanCode}</strong>，請直接點擊上方綠色的 <strong>「拍瓶身辨識」</strong> 拍包裝上的日/英/中文品名，儲存後即可永久綁定此條碼！`;
     }
 
     function manualLookupBarcode() {
@@ -874,6 +954,7 @@
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.add('hidden');
       statusBox.innerHTML = '';
+      lastOcrLines = [];
       document.getElementById('modal-title').textContent = id ? '編輯庫存品項' : '新增庫存品項';
 
       if (id) {
@@ -924,6 +1005,12 @@
         location: document.getElementById('item-location').value,
         owner: document.getElementById('item-owner').value
       };
+
+      // 將使用者輸入的新品牌加入自學習品牌庫
+      if (payload.brand && payload.brand.length >= 2 && !customBrands.some(b => b.toLowerCase() === payload.brand.toLowerCase())) {
+        customBrands.unshift(payload.brand);
+        if (customBrands.length > 200) customBrands.pop();
+      }
 
       if (payload.barcode) {
         customBarcodeDict[payload.barcode] = {
@@ -1044,7 +1131,7 @@
     function closeBackupModal() { document.getElementById('backup-modal').classList.add('hidden'); }
 
     function exportData() {
-      const blob = new Blob([JSON.stringify({ items, logs, emptiesCount, customBarcodeDict }, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify({ items, logs, emptiesCount, customBarcodeDict, customBrands }, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = `beauty-stock-backup-${new Date().toISOString().split('T')[0]}.json`;
@@ -1063,6 +1150,7 @@
             logs = data.logs || [];
             emptiesCount = data.emptiesCount || 0;
             customBarcodeDict = data.customBarcodeDict || {};
+            customBrands = data.customBrands || [];
             persist();
             closeBackupModal();
             alert('備份還原成功！');
