@@ -108,7 +108,7 @@
           <span class="p-1.5 rounded-lg bg-blue-50 text-blue-600"><i data-lucide="shopping-bag" class="w-4 h-4"></i></span>
         </div>
         <div id="stat-low" class="text-2xl font-bold text-blue-600">0</div>
-        <div class="text-[11px] text-slate-400 mt-0.5">低於安全庫存量</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">低於已設安全庫存</div>
       </button>
     </section>
 
@@ -184,23 +184,23 @@
         </button>
       </div>
 
-      <!-- 免金鑰拍照辨識 + 條碼掃描雙工具列 -->
+      <!-- 智慧掃碼 + 拍照辨識雙工具列 -->
       <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-2.5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <span class="text-xs font-semibold text-slate-700 block">免金鑰智慧建檔</span>
-            <span class="text-[11px] text-slate-400">依字體大小與關鍵字自動區分品牌與品名</span>
+            <span class="text-xs font-semibold text-slate-700 block">智慧條碼查詢 & 瓶身辨識</span>
+            <span class="text-[11px] text-slate-400">支援台日電商條碼自動搜尋與包裝 OCR 拆解</span>
           </div>
           <div class="flex items-center gap-1.5">
+            <button type="button" onclick="toggleCameraScanner()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-medium flex items-center gap-1.5 hover:bg-rose-700 shadow-xs">
+              <i data-lucide="scan-barcode" class="w-4 h-4"></i>
+              <span id="cam-btn-text">掃條碼</span>
+            </button>
             <label class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-medium flex items-center gap-1.5 hover:opacity-95 shadow-xs cursor-pointer">
               <i data-lucide="camera" class="w-4 h-4"></i>
               <span>拍瓶身辨識</span>
               <input id="ocr-photo-input" type="file" accept="image/*" capture="environment" onchange="handleOfflineOcrCapture(event)" class="hidden" />
             </label>
-            <button type="button" onclick="toggleCameraScanner()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-medium flex items-center gap-1.5 hover:bg-rose-700 shadow-xs">
-              <i data-lucide="scan-barcode" class="w-4 h-4"></i>
-              <span id="cam-btn-text">掃條碼</span>
-            </button>
           </div>
         </div>
 
@@ -250,8 +250,8 @@
             <input id="item-qty" type="number" min="0" value="1" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">安全庫存 *</label>
-            <input id="item-min-qty" type="number" min="0" value="1" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
+            <label class="block text-xs font-medium text-slate-600 mb-1">安全庫存 (選填)</label>
+            <input id="item-min-qty" type="number" min="0" placeholder="不提醒" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">單位</label>
@@ -332,8 +332,8 @@
 
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">1. 家庭共享空間代碼 (例：beauty-stock)</label>
-          <input id="sync-room-id" type="text" placeholder="例：beauty-stock" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
+          <label class="block text-xs font-medium text-slate-600 mb-1">1. 家庭共享空間代碼 (例：Beauty--stock)</label>
+          <input id="sync-room-id" type="text" placeholder="例：Beauty--stock" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
         </div>
 
         <div>
@@ -410,6 +410,10 @@
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
     }
+
+    // 內建 Google Custom Search 設定（支援台日電商條碼自動查詢）
+    const GOOGLE_CSE_API_KEY = 'AIzaSyBEsHrvF4SNE9-Q6E0IkAlRLsxPOWNVqyg';
+    const GOOGLE_CSE_CX = '267d2c4c2824e41f6';
 
     const STORAGE_KEY = 'beauty_stock_items_v2';
     const LOGS_KEY = 'beauty_stock_logs_v2';
@@ -516,6 +520,83 @@
       { keys: ['KOBAYASHI', '小林製藥', '小林製薬'], brand: '小林製藥' }
     ];
 
+    // 判斷是否設定安全存量且低於等於安全存量（未設定安全存量則不提醒）
+    function isItemLowStock(item) {
+      if (item.minQty === '' || item.minQty === null || item.minQty === undefined) return false;
+      const minVal = Number(item.minQty);
+      if (Number.isNaN(minVal)) return false;
+      return Number(item.qty) <= minVal;
+    }
+
+    // 清洗電商標題並自動拆出品牌與品名
+    function parseBrandAndNameFromTitle(rawTitle) {
+      if (!rawTitle) return { brand: '', name: '' };
+
+      // 1. 移除常見電商平台後綴與促銷括號標籤
+      let cleaned = rawTitle
+        .replace(/\s*[-|｜_]\s*(momo購物網|蝦皮購物|PChome.*|康是美.*|屈臣氏.*|博客來.*|楽天市場|Amazon\.co\.jp|@cosme.*|Yahoo!.*|LINE購物).*$/i, '')
+        .replace(/【(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|日本原裝|超值組|特惠組|現貨|預購|滿額贈|折扣)】/g, '')
+        .replace(/\[(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|現貨)\]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      let detectedBrand = '';
+      let matchedKey = '';
+
+      // 2. 優先檢查【品牌名稱】或 [品牌名稱] 格式
+      const bracketMatch = cleaned.match(/^[【\[]([^】\]]{1,20})[】\]]\s*(.+)$/);
+      if (bracketMatch) {
+        const candidate = bracketMatch[1].trim();
+        const rest = bracketMatch[2].trim();
+        if (!/(特價|組合|優惠|團購|福利|新品|組合價|單入|多入)/.test(candidate)) {
+          detectedBrand = candidate;
+          cleaned = rest;
+        }
+      }
+
+      // 3. 比對自學習品牌與內建台日美妝品牌字典
+      const upperTitle = cleaned.toUpperCase();
+      if (!detectedBrand) {
+        for (const cb of customBrands) {
+          if (cb && upperTitle.includes(cb.toUpperCase())) {
+            detectedBrand = cb;
+            matchedKey = cb;
+            break;
+          }
+        }
+      }
+      if (!detectedBrand) {
+        for (const entry of BRAND_DICTIONARY) {
+          const hit = entry.keys.find(k => upperTitle.includes(k.toUpperCase()));
+          if (hit) {
+            detectedBrand = entry.brand;
+            matchedKey = hit;
+            break;
+          }
+        }
+      }
+
+      // 4. 若標題開頭重複了品牌字眼，幫品名瘦身
+      let finalName = cleaned;
+      if (matchedKey) {
+        const escaped = matchedKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const stripped = finalName.replace(new RegExp(`^${escaped}[\\s/・-]*`, 'i'), '').trim();
+        if (stripped.length >= 2) finalName = stripped;
+      }
+
+      // 自動猜測分類
+      let category = '';
+      if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|リップ|ファンデーション|パウダー|アイシャドウ|マスカラ|チーク|下地/i.test(finalName)) {
+        category = '化妝品';
+      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤/i.test(finalName)) {
+        category = '日用品';
+      } else if (/化妝水|精華|乳液|面霜|修復霜|防曬|卸妝|洗面|潔顏|面膜|眼霜|凝露|化粧水|美容液|クリーム|日焼け止め|クレンジング|洗顔|パック/i.test(finalName)) {
+        category = '保養品';
+      }
+
+      return { brand: detectedBrand, name: finalName.slice(0, 80), category };
+    }
+
     function saveLocalCacheOnly() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
       localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
@@ -579,7 +660,7 @@
         }
         const safeRoom = roomId.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '');
         if (!safeRoom) {
-          throw new Error('家庭共享空間代碼請輸入英文字母或數字（例如 beauty-stock）。');
+          throw new Error('家庭共享空間代碼請輸入英文字母或數字（例如 Beauty--stock）。');
         }
 
         if (firebase.apps.length) {
@@ -902,7 +983,39 @@
       }
     }
 
+    // 透過 Google Custom Search API 查詢台日商品標題
+    async function fetchProductFromGoogleCse(cleanCode) {
+      if (!GOOGLE_CSE_API_KEY || !GOOGLE_CSE_CX) return null;
+      try {
+        const endpoint = `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(GOOGLE_CSE_API_KEY)}&cx=${encodeURIComponent(GOOGLE_CSE_CX)}&q=${encodeURIComponent(cleanCode)}&num=3`;
+        const res = await fetch(endpoint);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data.items && data.items.length > 0) {
+          // 挑選最具代表性的商品標題（排除純條碼數字標題）
+          const bestItem = data.items.find(it => it.title && it.title.replace(/\d+/g, '').trim().length >= 4) || data.items[0];
+          const parsed = parseBrandAndNameFromTitle(bestItem.title);
+          if (parsed.name || parsed.brand) {
+            return {
+              brand: parsed.brand,
+              name: parsed.name,
+              category: parsed.category,
+              source: 'Google 智慧搜尋'
+            };
+          }
+        }
+      } catch (e) {
+        console.warn('Google CSE lookup failed:', e);
+      }
+      return null;
+    }
+
     async function fetchProductFromApis(cleanCode) {
+      // 1. 優先使用 Google Custom Search 抓取台日電商商品標題
+      const googleHit = await fetchProductFromGoogleCse(cleanCode);
+      if (googleHit) return googleHit;
+
+      // 2. 備援：查詢 Open Beauty / Products / Food Facts
       const openFactsUrls = [
         `https://world.openbeautyfacts.org/api/v2/product/${cleanCode}.json`,
         `https://world.openproductsfacts.org/api/v2/product/${cleanCode}.json`,
@@ -918,11 +1031,12 @@
             const p = data.product;
             const pName = p.product_name_ja || p.product_name_zh || p.product_name_tw || p.product_name || p.generic_name || '';
             const pBrand = p.brands ? p.brands.split(',')[0].trim() : '';
-            if (pName || pBrand) return { brand: pBrand, name: pName };
+            if (pName || pBrand) return { brand: pBrand, name: pName, source: 'OpenBeautyFacts' };
           }
         } catch {}
       }
 
+      // 3. 備援：UPCitemdb
       try {
         const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${cleanCode}`);
         if (res.ok) {
@@ -930,7 +1044,7 @@
           if (data.items && data.items.length > 0) {
             const item = data.items[0];
             if (item.title || item.brand) {
-              return { brand: item.brand || '', name: item.title || '' };
+              return { brand: item.brand || '', name: item.title || '', source: 'UPCitemdb' };
             }
           }
         }
@@ -947,8 +1061,9 @@
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.remove('hidden');
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-blue-50 text-blue-800 border border-blue-200 flex items-center gap-2';
-      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在查詢條碼 ${cleanCode}...`;
+      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在搜尋台日商品資料庫與雲端記憶庫 (${cleanCode})...`;
 
+      // 第一層：Firebase 雲端與本機共享記憶庫
       const localMem = customBarcodeDict[cleanCode] || items.find(i => i.barcode === cleanCode);
       if (localMem) {
         document.getElementById('item-category').value = localMem.category || '保養品';
@@ -963,17 +1078,20 @@
         return;
       }
 
+      // 第二層：Google 自訂搜尋 & 開放資料庫
       const found = await fetchProductFromApis(cleanCode);
       if (found && (found.brand || found.name)) {
+        if (found.category) document.getElementById('item-category').value = found.category;
         if (found.brand) document.getElementById('item-brand').value = found.brand;
         if (found.name) document.getElementById('item-name').value = found.name;
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
-        statusBox.innerHTML = `✨ <strong>已自動帶入品牌與品名！</strong>儲存後將同步給所有共享成員。`;
+        statusBox.innerHTML = `✨ <strong>已透過 ${found.source} 自動帶入！</strong>（若品牌與品名有微調需求可點「⇄ 互換」，儲存後即永久同步給全家人）`;
         return;
       }
 
+      // 第三層：引導使用拍瓶身 OCR
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200';
-      statusBox.innerHTML = `⚠️ 開放庫暫無條碼 <strong>${cleanCode}</strong>，請直接點擊上方綠色的 <strong>「拍瓶身辨識」</strong> 拍包裝上的日/英/中文品名，儲存後即可永久綁定此條碼！`;
+      statusBox.innerHTML = `⚠️ 網路暫無條碼 <strong>${cleanCode}</strong> 的公開頁面，請直接點擊上方綠色的 <strong>「拍瓶身辨識」</strong> 拍包裝上的品名，儲存後即可永久綁定此條碼！`;
     }
 
     function manualLookupBarcode() {
@@ -1011,7 +1129,7 @@
           if (eff.diffDays < 0) expiredCount++;
           else if (eff.diffDays <= 30) expiringCount++;
         }
-        if (Number(item.qty) <= Number(item.minQty)) lowCount++;
+        if (isItemLowStock(item)) lowCount++;
       });
 
       document.getElementById('stat-total-qty').textContent = totalQty;
@@ -1021,7 +1139,7 @@
       document.getElementById('stat-low').textContent = lowCount;
       document.getElementById('stat-empties').textContent = emptiesCount;
 
-      const shoppingNeed = items.filter(i => Number(i.qty) <= Number(i.minQty) || (getEffectiveExpiry(i)?.diffDays ?? 999) < 0).length;
+      const shoppingNeed = items.filter(i => isItemLowStock(i) || (getEffectiveExpiry(i)?.diffDays ?? 999) < 0).length;
       const badge = document.getElementById('shopping-badge');
       badge.textContent = shoppingNeed;
       badge.classList.toggle('hidden', shoppingNeed === 0);
@@ -1046,20 +1164,20 @@
         const eff = getEffectiveExpiry(item);
         if (statusFilter === 'expired' && (!eff || eff.diffDays >= 0)) return false;
         if (statusFilter === 'expiring' && (!eff || eff.diffDays < 0 || eff.diffDays > 30)) return false;
-        if (statusFilter === 'low' && Number(item.qty) > Number(item.minQty)) return false;
+        if (statusFilter === 'low' && !isItemLowStock(item)) return false;
         if (statusFilter === 'opened' && !item.opened) return false;
         return true;
       });
 
       const grid = document.getElementById('items-grid');
       if (!filtered.length) {
-        grid.innerHTML = `<div class="col-span-full bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-400 text-sm">目前沒有符合條件的庫存品項，點擊右上角「新增」體驗拍瓶身建檔吧！</div>`;
+        grid.innerHTML = `<div class="col-span-full bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-400 text-sm">目前沒有符合條件的庫存品項，點擊右上角「新增」體驗掃條碼建檔吧！</div>`;
         return;
       }
 
       grid.innerHTML = filtered.map(item => {
         const eff = getEffectiveExpiry(item);
-        const isLow = Number(item.qty) <= Number(item.minQty);
+        const isLow = isItemLowStock(item);
         let expiryBadge = `<span class="text-[11px] text-slate-400">未設定效期</span>`;
 
         if (eff) {
@@ -1180,6 +1298,7 @@
     function openItemModal(id = null) {
       document.getElementById('item-form').reset();
       document.getElementById('item-id').value = '';
+      document.getElementById('item-min-qty').value = '';
       document.getElementById('opened-date-wrap').classList.add('hidden');
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.add('hidden');
@@ -1196,7 +1315,7 @@
           document.getElementById('item-brand').value = item.brand || '';
           document.getElementById('item-name').value = item.name;
           document.getElementById('item-qty').value = item.qty;
-          document.getElementById('item-min-qty').value = item.minQty;
+          document.getElementById('item-min-qty').value = (item.minQty !== '' && item.minQty !== null && item.minQty !== undefined) ? item.minQty : '';
           document.getElementById('item-unit').value = item.unit;
           document.getElementById('item-expiry').value = item.expiry || '';
           document.getElementById('item-pao').value = item.pao || 0;
@@ -1219,6 +1338,7 @@
     function saveItem(e) {
       e.preventDefault();
       const id = document.getElementById('item-id').value;
+      const rawMinQty = document.getElementById('item-min-qty').value.trim();
       const payload = {
         id: id || 'item-' + Date.now(),
         category: document.getElementById('item-category').value,
@@ -1226,7 +1346,7 @@
         brand: document.getElementById('item-brand').value.trim(),
         name: document.getElementById('item-name').value.trim(),
         qty: Number(document.getElementById('item-qty').value),
-        minQty: Number(document.getElementById('item-min-qty').value),
+        minQty: rawMinQty === '' ? '' : Number(rawMinQty),
         unit: document.getElementById('item-unit').value.trim() || '件',
         expiry: document.getElementById('item-expiry').value,
         pao: Number(document.getElementById('item-pao').value),
@@ -1307,7 +1427,7 @@
     }
 
     function openShoppingModal() {
-      const list = items.filter(i => Number(i.qty) <= Number(i.minQty) || (getEffectiveExpiry(i)?.diffDays ?? 999) < 0);
+      const list = items.filter(i => isItemLowStock(i) || (getEffectiveExpiry(i)?.diffDays ?? 999) < 0);
       const body = document.getElementById('shopping-list-body');
       if (!list.length) {
         body.innerHTML = `<p class="text-center text-slate-400 text-sm py-8">目前所有商品庫存充足且未過期！</p>`;
@@ -1318,7 +1438,7 @@
               <input type="checkbox" value="${i.id}" checked class="shop-chk rounded text-rose-600" />
               <div>
                 <div class="text-sm font-semibold text-slate-900">${i.brand ? i.brand + ' ' : ''}${i.name}</div>
-                <div class="text-xs text-slate-400">現有 ${i.qty} ${i.unit}（安全庫存 ${i.minQty}）</div>
+                <div class="text-xs text-slate-400">現有 ${i.qty} ${i.unit}${isItemLowStock(i) ? `（安全庫存 ${i.minQty}）` : '（已過期需汰換）'}</div>
               </div>
             </div>
             <span class="text-xs font-medium text-rose-600">需補貨</span>
