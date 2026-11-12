@@ -411,7 +411,7 @@
       });
     }
 
-    // 內建 Google Custom Search 設定（支援台日電商條碼自動查詢）
+    // 內建 Google Custom Search 設定（支援台日電商與日本藥妝 JAN 條碼自動查詢）
     const GOOGLE_CSE_API_KEY = 'AIzaSyBEsHrvF4SNE9-Q6E0IkAlRLsxPOWNVqyg';
     const GOOGLE_CSE_CX = '267d2c4c2824e41f6';
 
@@ -440,7 +440,8 @@
       { keys: ['KAO', '花王', 'カオー'], brand: 'Kao 花王' },
       { keys: ['KOSE', 'KOSÉ', '高絲', 'コーセー', '雪肌精'], brand: 'KOSÉ 高絲' },
       { keys: ['KANEBO', '佳麗寶', 'カネボウ'], brand: 'Kanebo 佳麗寶' },
-      { keys: ['HADA LABO', '肌研', 'ハダラボ', 'ROHTO', 'ロート'], brand: 'Hada Labo 肌研' },
+      { keys: ['HADA LABO', '肌研', 'ハダラボ'], brand: 'Hada Labo 肌研' },
+      { keys: ['ROHTO', 'ロート製薬', 'ロート', '樂敦'], brand: 'ROHTO 樂敦' },
       { keys: ['CUREL', 'CURÉL', '珂潤', 'キュレル'], brand: 'Curél 珂潤' },
       { keys: ['BIORE', 'BIORÉ', '蜜妮', 'ビオレ'], brand: 'Bioré 蜜妮' },
       { keys: ['SENKA', '專科', 'センカ'], brand: 'SENKA 專科' },
@@ -517,10 +518,10 @@
       { keys: ['一匙靈', 'ATTACK', 'アタック'], brand: 'Attack 一匙靈' },
       { keys: ['ARIEL', 'アリエール'], brand: 'ARIEL' },
       { keys: ['LION', '獅王', 'ライオン'], brand: 'LION 獅王' },
-      { keys: ['KOBAYASHI', '小林製藥', '小林製薬'], brand: '小林製藥' }
+      { keys: ['KOBAYASHI', '小林製藥', '小林製薬'], brand: '小林製藥' },
+      { keys: ['SANTEN', '参天製薬', '參天'], brand: 'Santen 參天製藥' }
     ];
 
-    // 判斷是否設定安全存量且低於等於安全存量（未設定安全存量則不提醒）
     function isItemLowStock(item) {
       if (item.minQty === '' || item.minQty === null || item.minQty === undefined) return false;
       const minVal = Number(item.minQty);
@@ -528,15 +529,15 @@
       return Number(item.qty) <= minVal;
     }
 
-    // 清洗電商標題並自動拆出品牌與品名
+    // 清洗台日電商與日本藥妝網站標題並自動拆出品牌與品名
     function parseBrandAndNameFromTitle(rawTitle) {
-      if (!rawTitle) return { brand: '', name: '' };
+      if (!rawTitle) return { brand: '', name: '', category: '' };
 
-      // 1. 移除常見電商平台後綴與促銷括號標籤
+      // 1. 移除常見台日電商平台後綴、條碼庫後綴與促銷括號標籤
       let cleaned = rawTitle
-        .replace(/\s*[-|｜_]\s*(momo購物網|蝦皮購物|PChome.*|康是美.*|屈臣氏.*|博客來.*|楽天市場|Amazon\.co\.jp|@cosme.*|Yahoo!.*|LINE購物).*$/i, '')
-        .replace(/【(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|日本原裝|超值組|特惠組|現貨|預購|滿額贈|折扣)】/g, '')
-        .replace(/\[(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|現貨)\]/g, '')
+        .replace(/\s*[-|｜_・]\s*(momo購物網|蝦皮購物|PChome.*|康是美.*|屈臣氏.*|博客來.*|楽天市場|Amazon\.co\.jp|@cosme.*|Yahoo!.*|LINE購物|ヨドバシ\.com|マツキヨココカラ.*|サンドラッグ.*|JANコード.*|JANCODE.*).*$/i, '')
+        .replace(/【(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|日本原裝|超值組|特惠組|現貨|預購|滿額贈|折扣|第[123]類医薬品)】/g, '')
+        .replace(/\[(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|現貨|第[123]類医薬品)\]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
 
@@ -588,7 +589,7 @@
       let category = '';
       if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|リップ|ファンデーション|パウダー|アイシャドウ|マスカラ|チーク|下地/i.test(finalName)) {
         category = '化妝品';
-      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤/i.test(finalName)) {
+      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|眼藥水|目薬|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤/i.test(finalName)) {
         category = '日用品';
       } else if (/化妝水|精華|乳液|面霜|修復霜|防曬|卸妝|洗面|潔顏|面膜|眼霜|凝露|化粧水|美容液|クリーム|日焼け止め|クレンジング|洗顔|パック/i.test(finalName)) {
         category = '保養品';
@@ -893,7 +894,7 @@
       let detectedCategory = '';
       if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|リップ|ファンデーション|パウダー|アイシャドウ|マスカラ|チーク|下地|LIP|FOUNDATION|MASCARA|POWDER|BLUSH/i.test(joined)) {
         detectedCategory = '化妝品';
-      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤|SHAMPOO|CONDITIONER|BODY WASH|TOOTHPASTE|DETERGENT/i.test(joined)) {
+      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|眼藥水|目薬|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤|SHAMPOO|CONDITIONER|BODY WASH|TOOTHPASTE|DETERGENT/i.test(joined)) {
         detectedCategory = '日用品';
       } else if (PRODUCT_TYPE_REGEX.test(joined)) {
         detectedCategory = '保養品';
@@ -983,27 +984,38 @@
       }
     }
 
-    // 透過 Google Custom Search API 查詢台日商品標題
+    // 透過 Google Custom Search API 查詢台日商品標題（支援自動附加 JAN / 商品 關鍵字備援搜尋）
+    async function queryGoogleCseOnce(searchQuery) {
+      const endpoint = `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(GOOGLE_CSE_API_KEY)}&cx=${encodeURIComponent(GOOGLE_CSE_CX)}&q=${encodeURIComponent(searchQuery)}&num=3`;
+      const res = await fetch(endpoint);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.items && data.items.length > 0) {
+        const bestItem = data.items.find(it => it.title && it.title.replace(/\d+/g, '').trim().length >= 4) || data.items[0];
+        const parsed = parseBrandAndNameFromTitle(bestItem.title);
+        if (parsed.name || parsed.brand) {
+          return {
+            brand: parsed.brand,
+            name: parsed.name,
+            category: parsed.category,
+            source: 'Google 智慧搜尋'
+          };
+        }
+      }
+      return null;
+    }
+
     async function fetchProductFromGoogleCse(cleanCode) {
       if (!GOOGLE_CSE_API_KEY || !GOOGLE_CSE_CX) return null;
       try {
-        const endpoint = `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(GOOGLE_CSE_API_KEY)}&cx=${encodeURIComponent(GOOGLE_CSE_CX)}&q=${encodeURIComponent(cleanCode)}&num=3`;
-        const res = await fetch(endpoint);
-        if (!res.ok) return null;
-        const data = await res.json();
-        if (data.items && data.items.length > 0) {
-          // 挑選最具代表性的商品標題（排除純條碼數字標題）
-          const bestItem = data.items.find(it => it.title && it.title.replace(/\d+/g, '').trim().length >= 4) || data.items[0];
-          const parsed = parseBrandAndNameFromTitle(bestItem.title);
-          if (parsed.name || parsed.brand) {
-            return {
-              brand: parsed.brand,
-              name: parsed.name,
-              category: parsed.category,
-              source: 'Google 智慧搜尋'
-            };
-          }
-        }
+        // 第一輪：直接用純條碼查詢
+        const directHit = await queryGoogleCseOnce(cleanCode);
+        if (directHit) return directHit;
+
+        // 第二輪：若未命中，針對日本條碼 (45/49) 附加 JAN 關鍵字，其餘附加 商品 關鍵字以提高命中率
+        const fallbackSuffix = /^(45|49)/.test(cleanCode) ? 'JAN' : '商品';
+        const fallbackHit = await queryGoogleCseOnce(`${cleanCode} ${fallbackSuffix}`);
+        if (fallbackHit) return fallbackHit;
       } catch (e) {
         console.warn('Google CSE lookup failed:', e);
       }
@@ -1011,7 +1023,7 @@
     }
 
     async function fetchProductFromApis(cleanCode) {
-      // 1. 優先使用 Google Custom Search 抓取台日電商商品標題
+      // 1. 優先使用 Google Custom Search 抓取台日電商與日本藥妝商品標題
       const googleHit = await fetchProductFromGoogleCse(cleanCode);
       if (googleHit) return googleHit;
 
