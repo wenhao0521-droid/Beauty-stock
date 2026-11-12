@@ -165,12 +165,12 @@
         </button>
       </div>
 
-      <!-- 智慧條碼掃描區塊 -->
+      <!-- 條碼掃描區塊 -->
       <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-2.5">
         <div class="flex items-center justify-between gap-2">
           <div>
-            <span class="text-xs font-semibold text-slate-700 block">台日全球條碼掃描查詢</span>
-            <span class="text-[11px] text-slate-400">支援 471台灣 / 45·49日本 JAN 條碼</span>
+            <span class="text-xs font-semibold text-slate-700 block">條碼掃描與自動帶入</span>
+            <span class="text-[11px] text-slate-400">支援 471台灣 / 45·49日本 / 歐美條碼</span>
           </div>
           <button type="button" onclick="toggleCameraScanner()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-medium flex items-center gap-1.5 hover:bg-rose-700 shadow-xs">
             <i data-lucide="scan-barcode" class="w-4 h-4"></i>
@@ -196,7 +196,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">條碼編號 (輸入可按查詢)</label>
+            <label class="block text-xs font-medium text-slate-600 mb-1">條碼編號</label>
             <div class="flex gap-1">
               <input id="item-barcode" type="text" placeholder="掃描或輸入條碼" class="w-full px-2.5 py-2 border border-slate-200 rounded-xl text-sm" />
               <button type="button" onclick="manualLookupBarcode()" class="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium shrink-0" title="查詢此條碼">查詢</button>
@@ -206,8 +206,8 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">品牌名稱 / 產地</label>
-            <input id="item-brand" type="text" placeholder="例：資生堂、花王" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
+            <label class="block text-xs font-medium text-slate-600 mb-1">品牌名稱</label>
+            <input id="item-brand" type="text" placeholder="例：資生堂、花王、理膚寶水" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">商品名稱 *</label>
@@ -320,7 +320,7 @@
         <h2 class="text-lg font-bold text-slate-900">資料備份與還原</h2>
         <button onclick="closeBackupModal()" class="p-1.5 rounded-full hover:bg-slate-100 text-slate-500"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-      <p class="text-xs text-slate-500 leading-relaxed">所有資料（包含您掃描建檔的自訂條碼記憶庫）目前安全儲存在本機瀏覽器中。更換手機前建議匯出 JSON 備份檔。</p>
+      <p class="text-xs text-slate-500 leading-relaxed">所有資料（包含您建檔的自訂條碼記憶庫）目前安全儲存在本機瀏覽器中。更換手機前建議匯出 JSON 備份檔。</p>
       <div class="space-y-2.5">
         <button onclick="exportData()" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800">匯出 JSON 備份檔</button>
         <label class="block w-full py-2.5 rounded-xl border border-slate-200 text-center text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
@@ -346,7 +346,6 @@
     let items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let logs = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
     let emptiesCount = parseInt(localStorage.getItem(EMPTIES_KEY) || '0', 10);
-    // 個人專屬條碼記憶庫：只要建檔過一次，下次掃描直接秒帶出
     let customBarcodeDict = JSON.parse(localStorage.getItem(BARCODE_CACHE_KEY)) || {};
     let currentCategory = '全部';
     let html5QrCode = null;
@@ -369,21 +368,46 @@
       if (logs.length > 100) logs.pop();
     }
 
-    // 依據國際 EAN/JAN 條碼前綴判斷製造國/註冊地
-    function detectOriginByBarcode(code) {
-      if (!code || code.length < 3) return '';
-      const p3 = code.slice(0, 3);
-      const p2 = code.slice(0, 2);
-      if (p3 === '471') return '🇹🇼 台灣商品';
-      if (p2 === '45' || p2 === '49') return '🇯🇵 日本商品';
-      if (p3 === '880') return '🇰🇷 韓國商品';
-      if (p2 >= '30' && p2 <= '37') return '🇫🇷 法國商品';
-      if (p2 >= '00' && p2 <= '13') return '🇺🇸 美加商品';
-      if (p3 >= '690' && p3 <= '699') return '🇨🇳 中國商品';
-      return '';
+    // 查詢單一 API 並解析品牌與品名
+    async function fetchProductFromApis(cleanCode) {
+      // 1. Open Beauty / Products / Food Facts
+      const openFactsUrls = [
+        `https://world.openbeautyfacts.org/api/v2/product/${cleanCode}.json`,
+        `https://world.openproductsfacts.org/api/v2/product/${cleanCode}.json`,
+        `https://world.openfoodfacts.org/api/v2/product/${cleanCode}.json`
+      ];
+
+      for (const url of openFactsUrls) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data.status === 1 && data.product) {
+            const p = data.product;
+            const pName = p.product_name_zh || p.product_name_tw || p.product_name_ja || p.product_name || p.generic_name || '';
+            const pBrand = p.brands ? p.brands.split(',')[0].trim() : '';
+            if (pName || pBrand) return { brand: pBrand, name: pName };
+          }
+        } catch {}
+      }
+
+      // 2. UPCitemdb 免費試用 API (支援大量日系、美系、國際美妝條碼)
+      try {
+        const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${cleanCode}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.items && data.items.length > 0) {
+            const item = data.items[0];
+            if (item.title || item.brand) {
+              return { brand: item.brand || '', name: item.title || '' };
+            }
+          }
+        }
+      } catch {}
+
+      return null;
     }
 
-    // 多層次智慧條碼查詢（個人記憶庫 -> Open Beauty Facts -> Open Products/Food Facts -> 國碼提示+Google一鍵搜）
     async function lookupBarcodeInfo(code) {
       const cleanCode = code.trim();
       if (!cleanCode) return;
@@ -392,9 +416,9 @@
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.remove('hidden');
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-blue-50 text-blue-800 border border-blue-200 flex items-center gap-2';
-      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在查詢條碼 ${cleanCode} 的台日與全球資料庫...`;
+      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在多庫搜尋條碼 ${cleanCode}...`;
 
-      // 1. 優先檢查個人歷史記憶庫或現有庫存
+      // 第一層：個人記憶庫（之前建檔過直接帶出）
       const localMem = customBarcodeDict[cleanCode] || items.find(i => i.barcode === cleanCode);
       if (localMem) {
         document.getElementById('item-category').value = localMem.category || '保養品';
@@ -405,62 +429,47 @@
         if (localMem.location) document.getElementById('item-location').value = localMem.location;
 
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
-        statusBox.innerHTML = `✅ <strong>已從您的個人記憶庫帶入：</strong>${localMem.brand ? localMem.brand + ' ' : ''}${localMem.name}`;
+        statusBox.innerHTML = `✅ <strong>已從個人記憶庫帶入：</strong>${localMem.brand ? localMem.brand + ' ' : ''}${localMem.name}`;
         return;
       }
 
-      // 2. 連線查詢 Open Beauty Facts 與 Open Products/Food Facts（收錄眾多台日美妝與日用品）
-      const endpoints = [
-        `https://world.openbeautyfacts.org/api/v2/product/${cleanCode}.json`,
-        `https://world.openproductsfacts.org/api/v2/product/${cleanCode}.json`,
-        `https://world.openfoodfacts.org/api/v2/product/${cleanCode}.json`
-      ];
-
-      let foundProduct = null;
-      for (const url of endpoints) {
-        try {
-          const res = await fetch(url);
-          if (!res.ok) continue;
-          const data = await res.json();
-          if (data.status === 1 && data.product) {
-            const p = data.product;
-            const pName = p.product_name_zh || p.product_name_tw || p.product_name_ja || p.product_name || p.generic_name || '';
-            const pBrand = p.brands ? p.brands.split(',')[0].trim() : '';
-            if (pName || pBrand) {
-              foundProduct = { name: pName, brand: pBrand };
-              break;
-            }
-          }
-        } catch (e) {
-          // 忽略單一 API 超時，繼續下一個
-        }
+      // 第二層：多庫雲端查詢
+      const found = await fetchProductFromApis(cleanCode);
+      if (found && (found.brand || found.name)) {
+        if (found.brand) document.getElementById('item-brand').value = found.brand;
+        if (found.name) document.getElementById('item-name').value = found.name;
+        statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
+        statusBox.innerHTML = `✨ <strong>已自動帶入品牌與品名！</strong>可依習慣微調文字，儲存後下次掃描將秒速記憶。`;
+        return;
       }
 
-      const originTag = detectOriginByBarcode(cleanCode);
-
-      if (foundProduct) {
-        if (foundProduct.brand) document.getElementById('item-brand').value = foundProduct.brand;
-        if (foundProduct.name) document.getElementById('item-name').value = foundProduct.name;
-        statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 space-y-1';
-        statusBox.innerHTML = `
-          <div>✨ <strong>雲端資料庫自動帶入成功！</strong>${originTag ? `（${originTag}）` : ''}</div>
-          <div class="text-[11px] text-emerald-700">若顯示為日文或英文品名，您可直接修改成習慣的中文名稱，儲存後下次掃描將自動記憶！</div>
-        `;
-      } else {
-        // 3. 若為日本限定新品或台灣在地商品尚未收錄，自動填入產地並提供 Google 一鍵搜條碼
-        if (originTag && !document.getElementById('item-brand').value) {
-          document.getElementById('item-brand').value = originTag.replace(/^[^\s]+\s/, '');
-        }
-        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanCode)}`;
-        statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200 space-y-1.5';
-        statusBox.innerHTML = `
-          <div>🔍 <strong>已讀取條碼：${cleanCode}</strong> ${originTag ? `（偵測為 ${originTag}）` : ''}</div>
-          <div class="text-[11px] text-amber-800">全球開放庫暫無此新品資料，點下方按鈕可立即用 Google 查出完整台日品名，儲存一次後本機即永久記住：</div>
-          <a href="${googleSearchUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-600 text-white font-medium hover:bg-amber-700">
-            <span>用 Google 搜尋條碼 ${cleanCode}</span>
+      // 第三層：開放資料庫查無此台日商品時，提供一鍵查品名與貼上工具（不塞入無用國碼）
+      const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanCode)}`;
+      statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200 space-y-2';
+      statusBox.innerHTML = `
+        <div>⚠️ 開放資料庫暫無 <strong>${cleanCode}</strong> 的台日商品資料。</div>
+        <div class="flex flex-wrap gap-1.5">
+          <a href="${googleUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-600 text-white font-medium hover:bg-amber-700">
+            <span>1. 點此 Google 查品名</span>
             <span>↗</span>
           </a>
-        `;
+          <button type="button" onclick="pasteToProductName()" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-amber-300 text-amber-900 font-medium hover:bg-amber-100">
+            <span>2. 貼上複製的品名</span>
+          </button>
+        </div>
+      `;
+    }
+
+    async function pasteToProductName() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          document.getElementById('item-name').value = text.trim();
+        } else {
+          alert('剪貼簿目前沒有文字，請先在 Google 搜尋結果長按複製商品名稱。');
+        }
+      } catch {
+        alert('瀏覽器未授權自動讀取剪貼簿，請直接在「商品名稱」欄位長按貼上即可。');
       }
     }
 
@@ -723,7 +732,6 @@
         owner: document.getElementById('item-owner').value
       };
 
-      // 只要有填寫條碼，自動同步存入個人條碼記憶庫，下次掃描直接秒帶出
       if (payload.barcode) {
         customBarcodeDict[payload.barcode] = {
           category: payload.category,
@@ -877,4 +885,4 @@
     lucide.createIcons();
   </script>
 </body>
-</html>
+</html>w
