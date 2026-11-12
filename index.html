@@ -521,7 +521,12 @@
       { keys: ['KOBAYASHI', '小林製藥', '小林製薬'], brand: '小林製藥' },
       { keys: ['SANTEN', '参天製薬', '參天'], brand: 'Santen 參天製藥' },
       { keys: ['第一三共', 'DAIICHI SANKYO'], brand: '第一三共' },
-      { keys: ['大正製薬', '大正製藥', 'TAISHO'], brand: '大正製藥' }
+      { keys: ['大正製薬', '大正製藥', 'TAISHO'], brand: '大正製藥' },
+      { keys: ['UNICHARM', 'ユニ・チャーム', 'ユニチャーム', '嬌聯', '絲花', 'SILCOT', 'シルコット'], brand: 'Unicharm 嬌聯' },
+      { keys: ['蘇菲', 'SOFY', 'ソフィ'], brand: 'SOFY 蘇菲' },
+      { keys: ['蕾妮亞', 'LAURIER', 'ロリエ'], brand: 'Laurier 蕾妮亞' },
+      { keys: ['靠得住', 'KOTEX'], brand: 'Kotex 靠得住' },
+      { keys: ['白蘭氏', 'BRAND\'S'], brand: '白蘭氏' }
     ];
 
     function isItemLowStock(item) {
@@ -547,7 +552,7 @@
       let detectedBrand = '';
       let matchedKey = '';
 
-      // 2. 優先檢查【品牌名稱】或 [品牌名稱] 格式
+      // 2. 優先檢查開頭【品牌】或 [品牌] 格式
       const bracketMatch = cleaned.match(/^[【\[]([^】\]]{1,20})[】\]]\s*(.+)$/);
       if (bracketMatch) {
         const candidate = bracketMatch[1].trim();
@@ -580,19 +585,32 @@
         }
       }
 
-      // 4. 若標題開頭重複了品牌字眼，幫品名瘦身
+      // 4. 針對「日本嬌聯（Unicharm）絲花（Silcot）化妝棉...」這類帶括號英文的品牌開頭進行智慧切分
       let finalName = cleaned;
-      if (matchedKey) {
-        const escaped = matchedKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const stripped = finalName.replace(new RegExp(`^${escaped}[\\s/・-]*`, 'i'), '').trim();
-        if (stripped.length >= 2) finalName = stripped;
+      if (detectedBrand && matchedKey) {
+        const escapedKey = matchedKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const bilingualBrandRegex = new RegExp(`^(日本|台灣|韓國)?[^\\s（(]*${escapedKey}[^\\s）)]*[）)]?\\s*`, 'i');
+        const strippedBilingual = finalName.replace(bilingualBrandRegex, '').trim();
+        if (strippedBilingual.length >= 2 && strippedBilingual !== finalName) {
+          finalName = strippedBilingual;
+        } else {
+          const stripped = finalName.replace(new RegExp(`^${escapedKey}[\\s/・-]*`, 'i'), '').trim();
+          if (stripped.length >= 2) finalName = stripped;
+        }
+      } else if (!detectedBrand) {
+        // 字典未收錄時的備援：若開頭為「品牌名（EnglishName） 剩餘品名」，自動拆出品牌
+        const genericParenBrand = finalName.match(/^([^\s（(]{2,12}[（(][A-Za-z0-9\s.&'-]{2,25}[）)])\s+(.{3,})$/);
+        if (genericParenBrand) {
+          detectedBrand = genericParenBrand[1].trim();
+          finalName = genericParenBrand[2].trim();
+        }
       }
 
-      // 自動猜測分類
+      // 5. 自動猜測分類（加入化妝棉、コットン等日用品關鍵字）
       let category = '';
       if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|リップ|ファンデーション|パウダー|アイシャドウ|マスカラ|チーク|下地/i.test(finalName)) {
         category = '化妝品';
-      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|眼藥水|目薬|コンタクト|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤/i.test(finalName)) {
+      } else if (/化妝棉|コットン|洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|眼藥水|目薬|コンタクト|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤/i.test(finalName)) {
         category = '日用品';
       } else if (/化妝水|精華|乳液|面霜|修復霜|防曬|卸妝|洗面|潔顏|面膜|眼霜|凝露|化粧水|美容液|クリーム|日焼け止め|クレンジング|洗顔|パック/i.test(finalName)) {
         category = '保養品';
@@ -950,7 +968,7 @@
       let detectedCategory = '';
       if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|リップ|ファンデーション|パウダー|アイシャドウ|マスカラ|チーク|下地|LIP|FOUNDATION|MASCARA|POWDER|BLUSH/i.test(joined)) {
         detectedCategory = '化妝品';
-      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|眼藥水|目薬|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤|SHAMPOO|CONDITIONER|BODY WASH|TOOTHPASTE|DETERGENT/i.test(joined)) {
+      } else if (/化妝棉|コットン|洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|眼藥水|目薬|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤|SHAMPOO|CONDITIONER|BODY WASH|TOOTHPASTE|DETERGENT/i.test(joined)) {
         detectedCategory = '日用品';
       } else if (PRODUCT_TYPE_REGEX.test(joined)) {
         detectedCategory = '保養品';
