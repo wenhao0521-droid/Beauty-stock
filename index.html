@@ -24,40 +24,47 @@
 </head>
 <body class="text-slate-800 antialiased pb-20">
 
-  <!-- 頂部導覽列 -->
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 py-3">
-    <div class="max-w-5xl mx-auto flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center text-white shadow-sm shrink-0">
-          <i data-lucide="sparkles" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 leading-tight">美妝與日用品庫存管家</h1>
-            <span id="sync-status-pill" onclick="openSyncModal()" class="cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1">
-              <span id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-              <span id="sync-label">單機模式</span>
-            </span>
+  <!-- 頂部導覽列（手機友善雙層橫向排版） -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 py-2.5">
+    <div class="max-w-5xl mx-auto space-y-2.5">
+      <!-- 第一層：橫向完整標題 + 雲端同步狀態 -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center text-white shadow-sm shrink-0">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
           </div>
-          <p class="text-[11px] text-slate-400 hidden sm:block">雲端多人即時同步・智慧品牌辨識・PAO開封倒數</p>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 truncate whitespace-nowrap">美妝與日用品庫存管家</h1>
         </div>
+
+        <span id="sync-status-pill" onclick="openSyncModal()" class="cursor-pointer shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1.5">
+          <span id="sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="sync-label" class="max-w-[110px] truncate">單機模式</span>
+        </span>
       </div>
 
-      <div class="flex items-center gap-1.5 sm:gap-2">
-        <button onclick="openSyncModal()" class="p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 transition" title="多人雲端同步設定">
-          <i data-lucide="cloud" class="w-5 h-5"></i>
-        </button>
-        <button onclick="openShoppingModal()" class="relative p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="採購清單">
-          <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-          <span id="shopping-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">0</span>
-        </button>
-        <button onclick="openLogsModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="異動紀錄">
-          <i data-lucide="history" class="w-5 h-5"></i>
-        </button>
-        <button onclick="openBackupModal()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="備份與還原">
-          <i data-lucide="database-backup" class="w-5 h-5"></i>
-        </button>
-        <button onclick="openItemModal()" class="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-3.5 py-2 rounded-xl shadow-sm transition">
+      <!-- 第二層：功能快捷按鈕列 -->
+      <div class="flex items-center justify-between gap-1.5">
+        <div class="flex items-center gap-1.5">
+          <button onclick="openSyncModal()" class="px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium flex items-center gap-1 transition" title="多人雲端同步設定">
+            <i data-lucide="cloud" class="w-4 h-4"></i>
+            <span class="hidden xs:inline sm:inline">共享</span>
+          </button>
+          <button onclick="openShoppingModal()" class="relative px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition" title="智慧採購清單">
+            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+            <span>採購</span>
+            <span id="shopping-badge" class="hidden ml-0.5 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">0</span>
+          </button>
+          <button onclick="openLogsModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition" title="異動紀錄">
+            <i data-lucide="history" class="w-4 h-4"></i>
+            <span>紀錄</span>
+          </button>
+          <button onclick="openBackupModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition" title="備份與還原">
+            <i data-lucide="database-backup" class="w-4 h-4"></i>
+            <span>備份</span>
+          </button>
+        </div>
+
+        <button onclick="openItemModal()" class="flex items-center gap-1 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-medium px-3.5 py-1.5 rounded-xl shadow-sm shrink-0 transition">
           <i data-lucide="plus" class="w-4 h-4"></i>
           <span>新增</span>
         </button>
@@ -542,18 +549,17 @@
       const label = document.getElementById('sync-label');
       label.textContent = text;
       if (state === 'connected') {
-        pill.className = 'cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1';
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse';
+        pill.className = 'cursor-pointer shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5';
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
       } else if (state === 'error') {
-        pill.className = 'cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1';
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-rose-500';
+        pill.className = 'cursor-pointer shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1.5';
+        dot.className = 'w-2 h-2 rounded-full bg-rose-500';
       } else {
-        pill.className = 'cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1';
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-400';
+        pill.className = 'cursor-pointer shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1.5';
+        dot.className = 'w-2 h-2 rounded-full bg-slate-400';
       }
     }
 
-    // 修正版解析器：直接提取 { ... } 物件並求值，完美保留 https:// 網址不被破壞
     function parseFirebaseConfigInput(rawText) {
       const braceMatch = rawText.match(/\{[\s\S]*\}/);
       if (!braceMatch) throw new Error('找不到 { ... } 設定區塊，請確認有複製大括號內的設定碼。');
