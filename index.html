@@ -30,11 +30,14 @@
         </div>
         <div>
           <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 leading-tight">美妝與日用品庫存管家</h1>
-          <p class="text-[11px] text-slate-400 hidden sm:block">台日條碼雲端查詢・PAO開封倒數・庫存追蹤</p>
+          <p class="text-[11px] text-slate-400 hidden sm:block">AI 拍瓶身辨識・PAO開封倒數・庫存追蹤</p>
         </div>
       </div>
 
       <div class="flex items-center gap-1.5 sm:gap-2">
+        <button onclick="openAiKeyModal()" class="p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition" title="設定 AI 辨識金鑰">
+          <i data-lucide="key-round" class="w-5 h-5"></i>
+        </button>
         <button onclick="openShoppingModal()" class="relative p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="採購清單">
           <i data-lucide="shopping-cart" class="w-5 h-5"></i>
           <span id="shopping-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">0</span>
@@ -165,22 +168,29 @@
         </button>
       </div>
 
-      <!-- 條碼掃描區塊 -->
+      <!-- AI 拍照辨識 + 條碼掃描雙工具列 -->
       <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-2.5">
-        <div class="flex items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <span class="text-xs font-semibold text-slate-700 block">條碼掃描與自動帶入</span>
-            <span class="text-[11px] text-slate-400">支援 471台灣 / 45·49日本 / 歐美條碼</span>
+            <span class="text-xs font-semibold text-slate-700 block">智慧快速建檔</span>
+            <span class="text-[11px] text-slate-400">拍瓶身自動辨識台日文字，或掃描條碼</span>
           </div>
-          <button type="button" onclick="toggleCameraScanner()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-medium flex items-center gap-1.5 hover:bg-rose-700 shadow-xs">
-            <i data-lucide="scan-barcode" class="w-4 h-4"></i>
-            <span id="cam-btn-text">開啟相機掃描</span>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <label class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-medium flex items-center gap-1.5 hover:opacity-95 shadow-xs cursor-pointer">
+              <i data-lucide="camera" class="w-4 h-4"></i>
+              <span>AI 拍瓶身辨識</span>
+              <input id="ai-photo-input" type="file" accept="image/*" capture="environment" onchange="handleAiPhotoCapture(event)" class="hidden" />
+            </label>
+            <button type="button" onclick="toggleCameraScanner()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-medium flex items-center gap-1.5 hover:bg-rose-700 shadow-xs">
+              <i data-lucide="scan-barcode" class="w-4 h-4"></i>
+              <span id="cam-btn-text">掃條碼</span>
+            </button>
+          </div>
         </div>
 
         <div id="qr-reader" class="hidden rounded-xl overflow-hidden border border-slate-200 bg-black"></div>
 
-        <!-- 查詢狀態提示列 -->
+        <!-- 辨識與查詢狀態提示列 -->
         <div id="barcode-status-box" class="hidden rounded-xl p-2.5 text-xs space-y-1.5"></div>
       </div>
 
@@ -287,6 +297,32 @@
     </div>
   </div>
 
+  <!-- 設定 Gemini API Key Modal -->
+  <div id="ai-key-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h2 class="text-lg font-bold text-slate-900">設定 AI 拍照辨識金鑰</h2>
+        <button onclick="closeAiKeyModal()" class="p-1.5 rounded-full hover:bg-slate-100 text-slate-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="text-xs text-slate-600 space-y-2 leading-relaxed">
+        <p>輸入免費的 <strong>Google Gemini API Key</strong> 後，即可直接拍攝台灣、日本、歐美瓶身包裝，自動辨識繁體中文品牌與商品名稱。</p>
+        <p class="text-[11px] text-slate-400">金鑰僅儲存在您的手機瀏覽器本機端，不會上傳至任何第三方伺服器。</p>
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-indigo-600 font-semibold hover:underline">
+          <span>前往 Google AI Studio 免費取得 API Key</span>
+          <span>↗</span>
+        </a>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Gemini API Key</label>
+        <input id="gemini-api-key-input" type="password" placeholder="AIzaSy..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeAiKeyModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600">取消</button>
+        <button type="button" onclick="saveAiKey()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">儲存金鑰</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 採購清單 Modal -->
   <div id="shopping-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[85vh] flex flex-col p-5 shadow-xl">
@@ -342,6 +378,7 @@
     const LOGS_KEY = 'beauty_stock_logs_v2';
     const EMPTIES_KEY = 'beauty_stock_empties_v2';
     const BARCODE_CACHE_KEY = 'beauty_stock_barcode_dict_v1';
+    const GEMINI_KEY_STORAGE = 'beauty_stock_gemini_api_key';
 
     let items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let logs = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
@@ -368,9 +405,132 @@
       if (logs.length > 100) logs.pop();
     }
 
-    // 查詢單一 API 並解析品牌與品名
+    // 壓縮拍攝照片以加快 AI 辨識速度並節省流量
+    function compressImageToBase64(file, maxDim = 1024) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width, h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+              else { w = Math.round(w * maxDim / h); h = maxDim; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            resolve(dataUrl.split(',')[1]);
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // AI 拍照辨識瓶身文字主流程
+    async function handleAiPhotoCapture(event) {
+      const file = event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+
+      const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE);
+      if (!apiKey) {
+        openAiKeyModal();
+        return;
+      }
+
+      const statusBox = document.getElementById('barcode-status-box');
+      statusBox.classList.remove('hidden');
+      statusBox.className = 'rounded-xl p-2.5 text-xs bg-indigo-50 text-indigo-800 border border-indigo-200 flex items-center gap-2';
+      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full"></span> AI 正在辨識瓶身品牌、品名與容量...`;
+
+      try {
+        const base64Data = await compressImageToBase64(file);
+        const prompt = `你是一個美妝與日用品庫存辨識助手。請仔細閱讀照片中的商品包裝或瓶身文字（可能是台灣繁體中文、日文、韓文或英文），辨識出這項商品。
+請嚴格只回傳純 JSON 格式（不要包含 markdown 標記），欄位如下：
+{
+  "category": "保養品" 或 "化妝品" 或 "日用品",
+  "brand": "品牌繁體中文名稱（若包裝為日文或英文知名品牌，請寫出台灣常用中文品牌名，例如 資生堂、花王、肌研、理膚寶水、佳麗寶）",
+  "name": "完整商品名稱與容量/規格（請翻譯或整理為台灣慣用繁體中文，例如：極潤保濕化妝水 170ml）",
+  "unit": "瓶" 或 "條" 或 "罐" 或 "盒" 或 "包" 或 "支",
+  "pao": 數字（常見開封保質月數，例如 6、12、24，若無法判斷填 12）
+}`;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                { inline_data: { mime_type: 'image/jpeg', data: base64Data } }
+              ]
+            }],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: 'application/json'
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `API 請求失敗 (${response.status})`);
+        }
+
+        const result = await response.json();
+        const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        const parsed = JSON.parse(rawText);
+
+        if (parsed.category && ['保養品', '化妝品', '日用品'].includes(parsed.category)) {
+          document.getElementById('item-category').value = parsed.category;
+        }
+        if (parsed.brand) document.getElementById('item-brand').value = parsed.brand;
+        if (parsed.name) document.getElementById('item-name').value = parsed.name;
+        if (parsed.unit) document.getElementById('item-unit').value = parsed.unit;
+        if (parsed.pao) document.getElementById('item-pao').value = String(parsed.pao);
+
+        statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
+        statusBox.innerHTML = `✨ <strong>AI 瓶身辨識成功！</strong>已自動填入品牌與品名${document.getElementById('item-barcode').value ? '，儲存後將同步綁定此條碼記憶！' : '。'}`;
+      } catch (err) {
+        statusBox.className = 'rounded-xl p-2.5 text-xs bg-rose-50 text-rose-800 border border-rose-200 space-y-1';
+        statusBox.innerHTML = `
+          <div>❌ <strong>AI 辨識失敗：</strong>${err.message}</div>
+          <button type="button" onclick="openAiKeyModal()" class="underline font-semibold">檢查或重新設定 Gemini API Key</button>
+        `;
+      }
+    }
+
+    function openAiKeyModal() {
+      document.getElementById('gemini-api-key-input').value = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
+      document.getElementById('ai-key-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeAiKeyModal() {
+      document.getElementById('ai-key-modal').classList.add('hidden');
+    }
+
+    function saveAiKey() {
+      const val = document.getElementById('gemini-api-key-input').value.trim();
+      if (!val) {
+        localStorage.removeItem(GEMINI_KEY_STORAGE);
+        alert('已清除 API Key');
+      } else {
+        localStorage.setItem(GEMINI_KEY_STORAGE, val);
+        alert('Gemini API Key 已儲存！現在可以直接點擊「AI 拍瓶身辨識」了。');
+      }
+      closeAiKeyModal();
+    }
+
+    // 查詢開放資料庫
     async function fetchProductFromApis(cleanCode) {
-      // 1. Open Beauty / Products / Food Facts
       const openFactsUrls = [
         `https://world.openbeautyfacts.org/api/v2/product/${cleanCode}.json`,
         `https://world.openproductsfacts.org/api/v2/product/${cleanCode}.json`,
@@ -391,7 +551,6 @@
         } catch {}
       }
 
-      // 2. UPCitemdb 免費試用 API (支援大量日系、美系、國際美妝條碼)
       try {
         const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${cleanCode}`);
         if (res.ok) {
@@ -416,9 +575,9 @@
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.remove('hidden');
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-blue-50 text-blue-800 border border-blue-200 flex items-center gap-2';
-      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在多庫搜尋條碼 ${cleanCode}...`;
+      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在查詢條碼 ${cleanCode}...`;
 
-      // 第一層：個人記憶庫（之前建檔過直接帶出）
+      // 第一層：個人記憶庫
       const localMem = customBarcodeDict[cleanCode] || items.find(i => i.barcode === cleanCode);
       if (localMem) {
         document.getElementById('item-category').value = localMem.category || '保養品';
@@ -439,38 +598,15 @@
         if (found.brand) document.getElementById('item-brand').value = found.brand;
         if (found.name) document.getElementById('item-name').value = found.name;
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
-        statusBox.innerHTML = `✨ <strong>已自動帶入品牌與品名！</strong>可依習慣微調文字，儲存後下次掃描將秒速記憶。`;
+        statusBox.innerHTML = `✨ <strong>已自動帶入品牌與品名！</strong>儲存後下次掃描將秒速記憶。`;
         return;
       }
 
-      // 第三層：開放資料庫查無此台日商品時，提供一鍵查品名與貼上工具（不塞入無用國碼）
-      const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanCode)}`;
-      statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200 space-y-2';
+      // 第三層：引導直接用 AI 拍瓶身正面自動辨識
+      statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200 space-y-1.5';
       statusBox.innerHTML = `
-        <div>⚠️ 開放資料庫暫無 <strong>${cleanCode}</strong> 的台日商品資料。</div>
-        <div class="flex flex-wrap gap-1.5">
-          <a href="${googleUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-600 text-white font-medium hover:bg-amber-700">
-            <span>1. 點此 Google 查品名</span>
-            <span>↗</span>
-          </a>
-          <button type="button" onclick="pasteToProductName()" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-amber-300 text-amber-900 font-medium hover:bg-amber-100">
-            <span>2. 貼上複製的品名</span>
-          </button>
-        </div>
+        <div>⚠️ 開放庫暫無條碼 <strong>${cleanCode}</strong>，請直接點擊上方紫色的 <strong>「AI 拍瓶身辨識」</strong> 拍正面包裝，系統將自動辨識品牌與品名並綁定此條碼！</div>
       `;
-    }
-
-    async function pasteToProductName() {
-      try {
-        const text = await navigator.clipboard.readText();
-        if (text && text.trim()) {
-          document.getElementById('item-name').value = text.trim();
-        } else {
-          alert('剪貼簿目前沒有文字，請先在 Google 搜尋結果長按複製商品名稱。');
-        }
-      } catch {
-        alert('瀏覽器未授權自動讀取剪貼簿，請直接在「商品名稱」欄位長按貼上即可。');
-      }
     }
 
     function manualLookupBarcode() {
@@ -550,7 +686,7 @@
 
       const grid = document.getElementById('items-grid');
       if (!filtered.length) {
-        grid.innerHTML = `<div class="col-span-full bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-400 text-sm">目前沒有符合條件的庫存品項，點擊右上角「新增」掃描條碼建立吧！</div>`;
+        grid.innerHTML = `<div class="col-span-full bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-400 text-sm">目前沒有符合條件的庫存品項，點擊右上角「新增」體驗 AI 拍瓶身建檔吧！</div>`;
         return;
       }
 
@@ -794,7 +930,7 @@
         html5QrCode = null;
       }
       document.getElementById('qr-reader').classList.add('hidden');
-      document.getElementById('cam-btn-text').textContent = '開啟相機掃描';
+      document.getElementById('cam-btn-text').textContent = '掃條碼';
     }
 
     function openShoppingModal() {
@@ -885,4 +1021,4 @@
     lucide.createIcons();
   </script>
 </body>
-</html>w
+</html>
