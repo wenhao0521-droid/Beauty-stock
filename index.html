@@ -189,7 +189,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
             <span class="text-xs font-semibold text-slate-700 block">智慧條碼查詢 & 瓶身辨識</span>
-            <span class="text-[11px] text-slate-400">支援台日電商條碼自動搜尋與包裝 OCR 拆解</span>
+            <span class="text-[11px] text-slate-400">支援條碼掃描、免金鑰電商搜尋與包裝 OCR</span>
           </div>
           <div class="flex items-center gap-1.5">
             <button type="button" onclick="toggleCameraScanner()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-medium flex items-center gap-1.5 hover:bg-rose-700 shadow-xs">
@@ -411,9 +411,9 @@
       });
     }
 
-    // 內建 Google Custom Search 設定（支援台日電商與日本藥妝 JAN 條碼自動查詢）
-    const GOOGLE_CSE_API_KEY = 'AIzaSyBEsHrvF4SNE9-Q6E0IkAlRLsxPOWNVqyg';
+    // 專屬 Google 程式化搜尋引擎 ID（免 API Key，直接開啟網頁搜尋並支援切回自動解析剪貼簿）
     const GOOGLE_CSE_CX = '267d2c4c2824e41f6';
+    let pendingExternalSearchBarcode = null;
 
     const STORAGE_KEY = 'beauty_stock_items_v2';
     const LOGS_KEY = 'beauty_stock_logs_v2';
@@ -519,7 +519,9 @@
       { keys: ['ARIEL', 'アリエール'], brand: 'ARIEL' },
       { keys: ['LION', '獅王', 'ライオン'], brand: 'LION 獅王' },
       { keys: ['KOBAYASHI', '小林製藥', '小林製薬'], brand: '小林製藥' },
-      { keys: ['SANTEN', '参天製薬', '參天'], brand: 'Santen 參天製藥' }
+      { keys: ['SANTEN', '参天製薬', '參天'], brand: 'Santen 參天製藥' },
+      { keys: ['第一三共', 'DAIICHI SANKYO'], brand: '第一三共' },
+      { keys: ['大正製薬', '大正製藥', 'TAISHO'], brand: '大正製藥' }
     ];
 
     function isItemLowStock(item) {
@@ -536,8 +538,9 @@
       // 1. 移除常見台日電商平台後綴、條碼庫後綴與促銷括號標籤
       let cleaned = rawTitle
         .replace(/\s*[-|｜_・]\s*(momo購物網|蝦皮購物|PChome.*|康是美.*|屈臣氏.*|博客來.*|楽天市場|Amazon\.co\.jp|@cosme.*|Yahoo!.*|LINE購物|ヨドバシ\.com|マツキヨココカラ.*|サンドラッグ.*|JANコード.*|JANCODE.*).*$/i, '')
-        .replace(/【(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|日本原裝|超值組|特惠組|現貨|預購|滿額贈|折扣|第[123]類医薬品)】/g, '')
-        .replace(/\[(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|現貨|第[123]類医薬品)\]/g, '')
+        .replace(/【(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|日本原裝|超值組|特惠組|現貨|預購|滿額贈|折扣|楽天市場|メール便|送料無料|第[123]類医薬品)】/g, ' ')
+        .replace(/\[(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|現貨|楽天市場|メール便|送料無料|第[123]類医薬品)\]/g, ' ')
+        .replace(/\(?\b\d{8,14}\b\)?/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 
@@ -589,7 +592,7 @@
       let category = '';
       if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|リップ|ファンデーション|パウダー|アイシャドウ|マスカラ|チーク|下地/i.test(finalName)) {
         category = '化妝品';
-      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|眼藥水|目薬|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤/i.test(finalName)) {
+      } else if (/洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|眼藥水|目薬|コンタクト|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|柔軟剤/i.test(finalName)) {
         category = '日用品';
       } else if (/化妝水|精華|乳液|面霜|修復霜|防曬|卸妝|洗面|潔顏|面膜|眼霜|凝露|化粧水|美容液|クリーム|日焼け止め|クレンジング|洗顔|パック/i.test(finalName)) {
         category = '保養品';
@@ -597,6 +600,59 @@
 
       return { brand: detectedBrand, name: finalName.slice(0, 80), category };
     }
+
+    // 免 API Key：直接開啟專屬 Google 程式化搜尋引擎網頁查詢該條碼
+    function openFreeGoogleSearch(barcode) {
+      const cleanCode = (barcode || document.getElementById('item-barcode').value || '').trim();
+      if (!cleanCode) return;
+      pendingExternalSearchBarcode = cleanCode;
+      const searchUrl = `https://cse.google.com/cse?cx=${GOOGLE_CSE_CX}&q=${encodeURIComponent(cleanCode)}`;
+      window.open(searchUrl, '_blank', 'noopener');
+    }
+
+    // 貼上並自動解析剪貼簿中的商品標題
+    async function pasteAndParseClipboardTitle(isAutoTrigger = false) {
+      try {
+        if (!navigator.clipboard || !navigator.clipboard.readText) return;
+        const rawClip = await navigator.clipboard.readText();
+        const text = (rawClip || '').trim();
+        if (!text || text.length < 2 || text.length > 150 || /^https?:\/\//i.test(text) || /^\d{8,14}$/.test(text)) {
+          if (!isAutoTrigger) {
+            alert('剪貼簿目前沒有可用的商品標題，請先在搜尋網頁長按複製商品名稱後再試一次！');
+          }
+          return;
+        }
+
+        const parsed = parseBrandAndNameFromTitle(text);
+        if (parsed.category) document.getElementById('item-category').value = parsed.category;
+        if (parsed.brand) document.getElementById('item-brand').value = parsed.brand;
+        if (parsed.name) document.getElementById('item-name').value = parsed.name;
+
+        pendingExternalSearchBarcode = null;
+        const statusBox = document.getElementById('barcode-status-box');
+        statusBox.classList.remove('hidden');
+        statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 space-y-1.5';
+        statusBox.innerHTML = `
+          <div>✨ <strong>已自動解析複製的商品標題並填入！</strong>（若品牌與品名有微調需求可點「⇄ 互換」，儲存後即永久同步給全家人）</div>
+        `;
+      } catch (err) {
+        if (!isAutoTrigger) {
+          alert('瀏覽器未允許自動讀取剪貼簿，請直接長按「商品名稱」輸入框貼上即可！');
+        }
+      }
+    }
+
+    // 當使用者在外部搜尋視窗複製標題後切回 App 時，自動嘗試偵測剪貼簿
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && pendingExternalSearchBarcode) {
+        pasteAndParseClipboardTitle(true);
+      }
+    });
+    window.addEventListener('focus', () => {
+      if (pendingExternalSearchBarcode) {
+        pasteAndParseClipboardTitle(true);
+      }
+    });
 
     function saveLocalCacheOnly() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
@@ -984,50 +1040,8 @@
       }
     }
 
-    // 透過 Google Custom Search API 查詢台日商品標題（支援自動附加 JAN / 商品 關鍵字備援搜尋）
-    async function queryGoogleCseOnce(searchQuery) {
-      const endpoint = `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(GOOGLE_CSE_API_KEY)}&cx=${encodeURIComponent(GOOGLE_CSE_CX)}&q=${encodeURIComponent(searchQuery)}&num=3`;
-      const res = await fetch(endpoint);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data.items && data.items.length > 0) {
-        const bestItem = data.items.find(it => it.title && it.title.replace(/\d+/g, '').trim().length >= 4) || data.items[0];
-        const parsed = parseBrandAndNameFromTitle(bestItem.title);
-        if (parsed.name || parsed.brand) {
-          return {
-            brand: parsed.brand,
-            name: parsed.name,
-            category: parsed.category,
-            source: 'Google 智慧搜尋'
-          };
-        }
-      }
-      return null;
-    }
-
-    async function fetchProductFromGoogleCse(cleanCode) {
-      if (!GOOGLE_CSE_API_KEY || !GOOGLE_CSE_CX) return null;
-      try {
-        // 第一輪：直接用純條碼查詢
-        const directHit = await queryGoogleCseOnce(cleanCode);
-        if (directHit) return directHit;
-
-        // 第二輪：若未命中，針對日本條碼 (45/49) 附加 JAN 關鍵字，其餘附加 商品 關鍵字以提高命中率
-        const fallbackSuffix = /^(45|49)/.test(cleanCode) ? 'JAN' : '商品';
-        const fallbackHit = await queryGoogleCseOnce(`${cleanCode} ${fallbackSuffix}`);
-        if (fallbackHit) return fallbackHit;
-      } catch (e) {
-        console.warn('Google CSE lookup failed:', e);
-      }
-      return null;
-    }
-
+    // 查詢免費開放商品資料庫（OpenBeautyFacts / OpenProductsFacts / UPCitemdb）
     async function fetchProductFromApis(cleanCode) {
-      // 1. 優先使用 Google Custom Search 抓取台日電商與日本藥妝商品標題
-      const googleHit = await fetchProductFromGoogleCse(cleanCode);
-      if (googleHit) return googleHit;
-
-      // 2. 備援：查詢 Open Beauty / Products / Food Facts
       const openFactsUrls = [
         `https://world.openbeautyfacts.org/api/v2/product/${cleanCode}.json`,
         `https://world.openproductsfacts.org/api/v2/product/${cleanCode}.json`,
@@ -1048,7 +1062,6 @@
         } catch {}
       }
 
-      // 3. 備援：UPCitemdb
       try {
         const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${cleanCode}`);
         if (res.ok) {
@@ -1073,7 +1086,7 @@
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.remove('hidden');
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-blue-50 text-blue-800 border border-blue-200 flex items-center gap-2';
-      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在搜尋台日商品資料庫與雲端記憶庫 (${cleanCode})...`;
+      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在搜尋雲端記憶庫與開放商品資料庫 (${cleanCode})...`;
 
       // 第一層：Firebase 雲端與本機共享記憶庫
       const localMem = customBarcodeDict[cleanCode] || items.find(i => i.barcode === cleanCode);
@@ -1090,7 +1103,7 @@
         return;
       }
 
-      // 第二層：Google 自訂搜尋 & 開放資料庫
+      // 第二層：免費開放商品資料庫
       const found = await fetchProductFromApis(cleanCode);
       if (found && (found.brand || found.name)) {
         if (found.category) document.getElementById('item-category').value = found.category;
@@ -1101,9 +1114,19 @@
         return;
       }
 
-      // 第三層：引導使用拍瓶身 OCR
-      statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200';
-      statusBox.innerHTML = `⚠️ 網路暫無條碼 <strong>${cleanCode}</strong> 的公開頁面，請直接點擊上方綠色的 <strong>「拍瓶身辨識」</strong> 拍包裝上的品名，儲存後即可永久綁定此條碼！`;
+      // 第三層：免 API Key 一鍵開啟專屬 Google 程式化搜尋引擎＋自動解析剪貼簿（亦可直接拍瓶身辨識）
+      statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200 space-y-2';
+      statusBox.innerHTML = `
+        <div>⚠️ 開放資料庫暫無條碼 <strong>${cleanCode}</strong>，可點下方搜尋後複製標題切回自動填入（或直接點上方綠色「拍瓶身辨識」）：</div>
+        <div class="flex gap-2">
+          <button type="button" onclick="openFreeGoogleSearch('${cleanCode}')" class="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-xs text-center shadow-xs">
+            🔍 一鍵搜台日商品標題
+          </button>
+          <button type="button" onclick="pasteAndParseClipboardTitle(false)" class="py-2 px-3 bg-white hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-lg font-medium text-xs whitespace-nowrap">
+            📋 貼上標題
+          </button>
+        </div>
+      `;
     }
 
     function manualLookupBarcode() {
@@ -1312,6 +1335,7 @@
       document.getElementById('item-id').value = '';
       document.getElementById('item-min-qty').value = '';
       document.getElementById('opened-date-wrap').classList.add('hidden');
+      pendingExternalSearchBarcode = null;
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.add('hidden');
       statusBox.innerHTML = '';
@@ -1344,6 +1368,7 @@
 
     function closeItemModal() {
       stopCameraScanner();
+      pendingExternalSearchBarcode = null;
       document.getElementById('item-modal').classList.add('hidden');
     }
 
