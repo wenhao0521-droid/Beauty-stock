@@ -13,6 +13,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- Firebase Compat SDK (支援單檔直接連線 Realtime Database) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
     body { font-family: 'Noto Sans TC', 'Noto Sans JP', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
@@ -30,12 +33,21 @@
           <i data-lucide="sparkles" class="w-5 h-5"></i>
         </div>
         <div>
-          <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 leading-tight">美妝與日用品庫存管家</h1>
-          <p class="text-[11px] text-slate-400 hidden sm:block">智慧品牌/品名拆解・PAO開封倒數・庫存追蹤</p>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 leading-tight">美妝與日用品庫存管家</h1>
+            <span id="sync-status-pill" onclick="openSyncModal()" class="cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1">
+              <span id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+              <span id="sync-label">單機模式</span>
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">雲端多人即時同步・智慧品牌辨識・PAO開封倒數</p>
         </div>
       </div>
 
       <div class="flex items-center gap-1.5 sm:gap-2">
+        <button onclick="openSyncModal()" class="p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 transition" title="多人雲端同步設定">
+          <i data-lucide="cloud" class="w-5 h-5"></i>
+        </button>
         <button onclick="openShoppingModal()" class="relative p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="採購清單">
           <i data-lucide="shopping-cart" class="w-5 h-5"></i>
           <span id="shopping-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">0</span>
@@ -298,6 +310,52 @@
     </div>
   </div>
 
+  <!-- Firebase 多人即時同步設定 Modal -->
+  <div id="sync-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-5 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h2 class="text-lg font-bold text-slate-900">多人即時雲端同步 (Firebase)</h2>
+        <button onclick="closeSyncModal()" class="p-1.5 rounded-full hover:bg-slate-100 text-slate-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="bg-sky-50 border border-sky-200/80 rounded-2xl p-3 text-xs text-sky-900 space-y-1.5 leading-relaxed">
+        <div class="font-semibold">如何與家人共享同一份庫存？</div>
+        <p>1. 在兩支手機分別貼上同一份 <strong>Firebase Config 設定碼</strong> 與自訂的<strong>家庭共享代碼</strong>。</p>
+        <p>2. 任一方新增、消耗或空瓶，另一方畫面會在 1 秒內自動即時更新。</p>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">1. 家庭共享空間代碼 (自訂英文數字，例：home-stock-2026)</label>
+          <input id="sync-room-id" type="text" placeholder="請輸入與家人約定好的空間代碼" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">2. 貼上 Firebase Config（從 Firebase 專案設定複製的物件）</label>
+          <textarea id="sync-firebase-config" rows="6" placeholder='{
+  apiKey: "AIzaSy...",
+  authDomain: "xxx.firebaseapp.com",
+  databaseURL: "https://xxx.firebasedatabase.app",
+  projectId: "xxx",
+  storageBucket: "xxx.appspot.com",
+  messagingSenderId: "12345",
+  appId: "1:12345:web:abcde"
+}' class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:border-sky-400"></textarea>
+        </div>
+
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button type="button" onclick="saveAndConnectFirebase()" class="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium transition">儲存並立即連線</button>
+          <button type="button" onclick="pushLocalToCloudForce()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition" title="將目前手機上的本機資料覆蓋上傳至雲端">本機上傳覆蓋雲端</button>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+          <button type="button" onclick="copyShareInvite()" class="text-xs text-sky-600 font-semibold hover:underline">📋 複製連線設定傳給家人</button>
+          <button type="button" onclick="disconnectFirebase()" class="text-xs text-rose-500 hover:underline">中斷連線改回單機</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 採購清單 Modal -->
   <div id="shopping-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[85vh] flex flex-col p-5 shadow-xl">
@@ -331,7 +389,7 @@
         <h2 class="text-lg font-bold text-slate-900">資料備份與還原</h2>
         <button onclick="closeBackupModal()" class="p-1.5 rounded-full hover:bg-slate-100 text-slate-500"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-      <p class="text-xs text-slate-500 leading-relaxed">所有資料（包含您建檔的自訂條碼與自學習品牌庫）目前安全儲存在本機瀏覽器中。更換手機前建議匯出 JSON 備份檔。</p>
+      <p class="text-xs text-slate-500 leading-relaxed">所有資料（包含您建檔的自訂條碼與自學習品牌庫）皆可匯出為 JSON 備份檔保存。</p>
       <div class="space-y-2.5">
         <button onclick="exportData()" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800">匯出 JSON 備份檔</button>
         <label class="block w-full py-2.5 rounded-xl border border-slate-200 text-center text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
@@ -354,6 +412,8 @@
     const EMPTIES_KEY = 'beauty_stock_empties_v2';
     const BARCODE_CACHE_KEY = 'beauty_stock_barcode_dict_v1';
     const CUSTOM_BRANDS_KEY = 'beauty_stock_custom_brands_v1';
+    const FIREBASE_CFG_KEY = 'beauty_stock_firebase_cfg_v1';
+    const FIREBASE_ROOM_KEY = 'beauty_stock_firebase_room_v1';
 
     let items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let logs = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
@@ -363,6 +423,10 @@
     let currentCategory = '全部';
     let html5QrCode = null;
     let lastOcrLines = [];
+
+    // Firebase 狀態變數
+    let dbRef = null;
+    let isRemoteUpdating = false;
 
     const BRAND_DICTIONARY = [
       { keys: ['SHISEIDO', '資生堂', 'シセイドウ'], brand: 'SHISEIDO 資生堂' },
@@ -449,13 +513,186 @@
       { keys: ['KOBAYASHI', '小林製藥', '小林製薬'], brand: '小林製藥' }
     ];
 
-    function persist() {
+    function saveLocalCacheOnly() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
       localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
       localStorage.setItem(EMPTIES_KEY, String(emptiesCount));
       localStorage.setItem(BARCODE_CACHE_KEY, JSON.stringify(customBarcodeDict));
       localStorage.setItem(CUSTOM_BRANDS_KEY, JSON.stringify(customBrands));
+    }
+
+    function persist() {
+      saveLocalCacheOnly();
       renderAll();
+
+      // 若已連線 Firebase 且非遠端推播觸發，則同步寫入雲端
+      if (dbRef && !isRemoteUpdating) {
+        dbRef.set({
+          items,
+          logs,
+          emptiesCount,
+          customBarcodeDict,
+          customBrands,
+          updatedAt: Date.now()
+        }).catch((err) => {
+          console.error('Firebase sync write error:', err);
+          updateSyncBadge('error', '同步異常');
+        });
+      }
+    }
+
+    function updateSyncBadge(state, text) {
+      const pill = document.getElementById('sync-status-pill');
+      const dot = document.getElementById('sync-dot');
+      const label = document.getElementById('sync-label');
+      label.textContent = text;
+      if (state === 'connected') {
+        pill.className = 'cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse';
+      } else if (state === 'error') {
+        pill.className = 'cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-rose-500';
+      } else {
+        pill.className = 'cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-400';
+      }
+    }
+
+    // 解析使用者貼上的 Firebase Config（支援標準 JSON 或直接從 Firebase 網頁複製的 JS 物件格式）
+    function parseFirebaseConfigInput(rawText) {
+      let cleaned = rawText.trim();
+      const braceMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (braceMatch) cleaned = braceMatch[0];
+      // 補齊未加雙引號的 key，轉為合法 JSON
+      const jsonStr = cleaned
+        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
+        .replace(/'/g, '"')
+        .replace(/,\s*}/g, '}');
+      return JSON.parse(jsonStr);
+    }
+
+    function initFirebaseSync(configObj, roomId, isInitialSetup = false) {
+      try {
+        if (!configObj.databaseURL) {
+          throw new Error('設定碼中缺少 databaseURL，請確認已在 Firebase 啟用 Realtime Database 並重新複製設定碼。');
+        }
+        const safeRoom = roomId.replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!safeRoom) {
+          throw new Error('家庭共享空間代碼只能包含英文字母、數字、底線或連字號。');
+        }
+
+        if (firebase.apps.length) {
+          firebase.apps.forEach(app => app.delete().catch(() => {}));
+        }
+        const app = firebase.initializeApp(configObj);
+        const database = firebase.database(app);
+        dbRef = database.ref(`beauty_stock_rooms/${safeRoom}`);
+
+        updateSyncBadge('connected', `已同步：${safeRoom}`);
+
+        // 監聽雲端即時資料變動
+        dbRef.on('value', (snapshot) => {
+          const val = snapshot.val();
+          if (!val) {
+            // 若雲端空間是全新的，自動把本機現有資料上傳初始化
+            if (isInitialSetup || items.length > 0) {
+              dbRef.set({
+                items,
+                logs,
+                emptiesCount,
+                customBarcodeDict,
+                customBrands,
+                updatedAt: Date.now()
+              });
+            }
+            return;
+          }
+
+          isRemoteUpdating = true;
+          items = Array.isArray(val.items) ? val.items : [];
+          logs = Array.isArray(val.logs) ? val.logs : [];
+          emptiesCount = Number(val.emptiesCount || 0);
+          customBarcodeDict = val.customBarcodeDict || {};
+          customBrands = Array.isArray(val.customBrands) ? val.customBrands : [];
+          saveLocalCacheOnly();
+          renderAll();
+          isRemoteUpdating = false;
+        }, (err) => {
+          updateSyncBadge('error', '權限或連線錯誤');
+          alert('Firebase 連線失敗：' + err.message);
+        });
+
+        return true;
+      } catch (e) {
+        updateSyncBadge('error', '設定格式錯誤');
+        alert('Firebase 設定解析失敗：' + e.message);
+        return false;
+      }
+    }
+
+    function openSyncModal() {
+      document.getElementById('sync-room-id').value = localStorage.getItem(FIREBASE_ROOM_KEY) || '';
+      document.getElementById('sync-firebase-config').value = localStorage.getItem(FIREBASE_CFG_KEY) || '';
+      document.getElementById('sync-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeSyncModal() {
+      document.getElementById('sync-modal').classList.add('hidden');
+    }
+
+    function saveAndConnectFirebase() {
+      const roomId = document.getElementById('sync-room-id').value.trim();
+      const rawCfg = document.getElementById('sync-firebase-config').value.trim();
+      if (!roomId || !rawCfg) {
+        return alert('請填寫「家庭共享空間代碼」與「Firebase Config 設定碼」。');
+      }
+      try {
+        const cfgObj = parseFirebaseConfigInput(rawCfg);
+        const ok = initFirebaseSync(cfgObj, roomId, true);
+        if (ok) {
+          localStorage.setItem(FIREBASE_ROOM_KEY, roomId);
+          localStorage.setItem(FIREBASE_CFG_KEY, JSON.stringify(cfgObj, null, 2));
+          closeSyncModal();
+          alert(`已成功連線至共享空間「${roomId}」！現在只要在另一支手機輸入相同設定，雙方資料就會即時同步。`);
+        }
+      } catch (err) {
+        alert('Config 格式無法解析，請確認完整複製了 { ... } 內容：\n' + err.message);
+      }
+    }
+
+    function pushLocalToCloudForce() {
+      if (!dbRef) return alert('請先儲存並連線 Firebase 後再執行上傳覆蓋。');
+      if (!confirm('確定要用目前這支手機的資料覆蓋雲端共享空間嗎？')) return;
+      dbRef.set({
+        items,
+        logs,
+        emptiesCount,
+        customBarcodeDict,
+        customBrands,
+        updatedAt: Date.now()
+      }).then(() => alert('本機資料已成功同步覆蓋至雲端！'));
+    }
+
+    function copyShareInvite() {
+      const roomId = document.getElementById('sync-room-id').value.trim();
+      const rawCfg = document.getElementById('sync-firebase-config').value.trim();
+      if (!roomId || !rawCfg) return alert('請先填入空間代碼與 Config 再複製分享');
+      const msg = `📦 美妝與日用品庫存管家－多人同步設定\n\n網址：${window.location.href}\n\n1. 家庭共享空間代碼：\n${roomId}\n\n2. Firebase Config：\n${rawCfg}`;
+      navigator.clipboard?.writeText(msg);
+      alert('已複製完整同步設定，直接貼到 LINE 傳給家人貼上即可！');
+    }
+
+    function disconnectFirebase() {
+      if (dbRef) {
+        dbRef.off();
+        dbRef = null;
+      }
+      localStorage.removeItem(FIREBASE_ROOM_KEY);
+      localStorage.removeItem(FIREBASE_CFG_KEY);
+      updateSyncBadge('offline', '單機模式');
+      closeSyncModal();
+      alert('已中斷雲端連線，目前切換為單機模式。');
     }
 
     function addLog(action, itemName, deltaText) {
@@ -503,10 +740,9 @@
       });
     }
 
-    // 結合「字塊位置(top)、字體高度(height)、語意關鍵字(品類/容量)與品牌庫」智慧區分品牌與品名
     function analyzeOcrStructure(ocrData, imgHeight) {
       const rawLines = ocrData?.lines || [];
-      const PRODUCT_TYPE_REGEX = /(化妝水|精華|乳液|面霜|修復霜|防曬|卸妝|洗面|潔顏|面膜|眼霜|凝露|口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|化粧水|美容液|クリーム|日焼け止め|クレンジング|洗顔|パック|リップ|ファンデーション|パウダー|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|LOTION|SERUM|ESSENCE|CREAM|EMULSION|SUNSCREEN|CLEANSER|MASK|BAUME|BALM|GEL|TONER|LIP|FOUNDATION|MASCARA|POWDER|SHAMPOO|CONDITIONER|WASH)/i;
+      const PRODUCT_TYPE_REGEX = /(化妝水|精華|乳液|面霜|修復霜|防曬|卸妝|洗面|潔顏|面膜|眼霜|凝露|口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|洗髮|沐浴|牙膏|牙刷|洗衣|衛生紙|濕紙巾|洗手|洗碗|清潔|芳香|除濕|衛生棉|護墊|化粧水|美容液|クリーム|日焼け止め|クレンジング|洗顔|パック|リップ|ファンデーション|パウダー|シャンプー|トリートメント|ボディソープ|歯磨き|洗剤|LOTION|SERUM|ESSENCE|CREAM|EMULSION|SUNSCREEN|CLEANSER|MASK|BAUME|BALM|GEL|TONER|LIP|FOUNDATION|MASCARA|POWDER|SHAMPOO|CONDITIONER|WASH)/i;
       const SPEC_ONLY_REGEX = /^(\d+\s*(ml|g|mg|oz|片|入|抽|枚)|SPF\d+|PA\++|NET\s*WT\.?)$/i;
 
       const structured = rawLines
@@ -522,7 +758,6 @@
       let detectedBrand = '';
       let matchedBrandKey = '';
 
-      // 1. 先比對使用者自學習品牌庫 + 內建台日歐美品牌庫
       const allTextUpper = structured.map(s => s.text).join(' ').toUpperCase();
       for (const cb of customBrands) {
         if (cb && allTextUpper.includes(cb.toUpperCase())) {
@@ -542,7 +777,6 @@
         }
       }
 
-      // 2. 若字典未命中，依據「包裝設計學」推測品牌：位於圖片上方(relTop < 0.35)、不含品類詞/容量詞、字數較短的獨立標題
       if (!detectedBrand && structured.length >= 2) {
         const brandCandidate = structured.find(s =>
           s.relTop < 0.38 &&
@@ -556,7 +790,6 @@
         }
       }
 
-      // 3. 挑選「商品名稱」：排除已認出的品牌行與純容量標示，優先挑選「含品類關鍵字」或「字體最大(height最高)」的行
       const nameCandidates = structured.filter(s => {
         const up = s.text.toUpperCase();
         if (matchedBrandKey && (up === matchedBrandKey || (matchedBrandKey.length >= 4 && up.includes(matchedBrandKey) && s.text.length <= matchedBrandKey.length + 3))) {
@@ -566,7 +799,6 @@
         return true;
       });
 
-      // 為每個候選行計算「像品名」的分數（字體越大 + 含有產品型態詞分數越高）
       const scoredNames = [...nameCandidates].sort((a, b) => {
         const scoreA = a.height + (PRODUCT_TYPE_REGEX.test(a.text) ? 40 : 0);
         const scoreB = b.height + (PRODUCT_TYPE_REGEX.test(b.text) ? 40 : 0);
@@ -577,7 +809,6 @@
       const secondarySpec = structured.find(s => /\d+\s*(ml|g|片|入|枚)/i.test(s.text) && !primaryName.includes(s.text))?.text || '';
       const suggestedName = [primaryName, secondarySpec].filter(Boolean).join(' ').slice(0, 65);
 
-      // 4. 推測商品分類
       const joined = structured.map(s => s.text).join(' ');
       let detectedCategory = '';
       if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|リップ|ファンデーション|パウダー|アイシャドウ|マスカラ|チーク|下地|LIP|FOUNDATION|MASCARA|POWDER|BLUSH/i.test(joined)) {
@@ -729,7 +960,7 @@
         if (localMem.location) document.getElementById('item-location').value = localMem.location;
 
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
-        statusBox.innerHTML = `✅ <strong>已從個人記憶庫帶入：</strong>${localMem.brand ? localMem.brand + ' ' : ''}${localMem.name}`;
+        statusBox.innerHTML = `✅ <strong>已從共享記憶庫帶入：</strong>${localMem.brand ? localMem.brand + ' ' : ''}${localMem.name}`;
         return;
       }
 
@@ -738,7 +969,7 @@
         if (found.brand) document.getElementById('item-brand').value = found.brand;
         if (found.name) document.getElementById('item-name').value = found.name;
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
-        statusBox.innerHTML = `✨ <strong>已自動帶入品牌與品名！</strong>儲存後下次掃描將秒速記憶。`;
+        statusBox.innerHTML = `✨ <strong>已自動帶入品牌與品名！</strong>儲存後將同步給所有共享成員。`;
         return;
       }
 
@@ -1006,7 +1237,6 @@
         owner: document.getElementById('item-owner').value
       };
 
-      // 將使用者輸入的新品牌加入自學習品牌庫
       if (payload.brand && payload.brand.length >= 2 && !customBrands.some(b => b.toLowerCase() === payload.brand.toLowerCase())) {
         customBrands.unshift(payload.brand);
         if (customBrands.length > 200) customBrands.pop();
@@ -1161,6 +1391,17 @@
       };
       reader.readAsText(file);
     }
+
+    // 啟動時檢查是否已儲存 Firebase 設定，若已設定則自動連線同步
+    (function bootstrapCloudSync() {
+      const savedRoom = localStorage.getItem(FIREBASE_ROOM_KEY);
+      const savedCfg = localStorage.getItem(FIREBASE_CFG_KEY);
+      if (savedRoom && savedCfg) {
+        try {
+          initFirebaseSync(JSON.parse(savedCfg), savedRoom, false);
+        } catch {}
+      }
+    })();
 
     renderAll();
     lucide.createIcons();
