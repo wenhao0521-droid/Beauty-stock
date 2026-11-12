@@ -13,7 +13,6 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <!-- Firebase Compat SDK (支援單檔直接連線 Realtime Database) -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <style>
@@ -320,27 +319,25 @@
 
       <div class="bg-sky-50 border border-sky-200/80 rounded-2xl p-3 text-xs text-sky-900 space-y-1.5 leading-relaxed">
         <div class="font-semibold">如何與家人共享同一份庫存？</div>
-        <p>1. 在兩支手機分別貼上同一份 <strong>Firebase Config 設定碼</strong> 與自訂的<strong>家庭共享代碼</strong>。</p>
+        <p>1. 在兩支手機分別貼上同一份 <strong>Firebase Config 設定碼</strong> 與自訂的<strong>家庭共享代碼</strong>（請用英文或連字號，勿含空格）。</p>
         <p>2. 任一方新增、消耗或空瓶，另一方畫面會在 1 秒內自動即時更新。</p>
       </div>
 
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">1. 家庭共享空間代碼 (自訂英文數字，例：home-stock-2026)</label>
-          <input id="sync-room-id" type="text" placeholder="請輸入與家人約定好的空間代碼" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
+          <label class="block text-xs font-medium text-slate-600 mb-1">1. 家庭共享空間代碼 (例：beauty-stock)</label>
+          <input id="sync-room-id" type="text" placeholder="例：beauty-stock" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">2. 貼上 Firebase Config（從 Firebase 專案設定複製的物件）</label>
-          <textarea id="sync-firebase-config" rows="6" placeholder='{
+          <label class="block text-xs font-medium text-slate-600 mb-1">2. 貼上 Firebase Config（從 Firebase 專案設定複製整段即可）</label>
+          <textarea id="sync-firebase-config" rows="6" placeholder='const firebaseConfig = {
   apiKey: "AIzaSy...",
   authDomain: "xxx.firebaseapp.com",
   databaseURL: "https://xxx.firebasedatabase.app",
   projectId: "xxx",
-  storageBucket: "xxx.appspot.com",
-  messagingSenderId: "12345",
-  appId: "1:12345:web:abcde"
-}' class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:border-sky-400"></textarea>
+  ...
+};' class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:border-sky-400"></textarea>
         </div>
 
         <div class="flex flex-wrap gap-2 pt-1">
@@ -424,7 +421,6 @@
     let html5QrCode = null;
     let lastOcrLines = [];
 
-    // Firebase 狀態變數
     let dbRef = null;
     let isRemoteUpdating = false;
 
@@ -525,7 +521,6 @@
       saveLocalCacheOnly();
       renderAll();
 
-      // 若已連線 Firebase 且非遠端推播觸發，則同步寫入雲端
       if (dbRef && !isRemoteUpdating) {
         dbRef.set({
           items,
@@ -558,27 +553,27 @@
       }
     }
 
-    // 解析使用者貼上的 Firebase Config（支援標準 JSON 或直接從 Firebase 網頁複製的 JS 物件格式）
+    // 修正版解析器：直接提取 { ... } 物件並求值，完美保留 https:// 網址不被破壞
     function parseFirebaseConfigInput(rawText) {
-      let cleaned = rawText.trim();
-      const braceMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (braceMatch) cleaned = braceMatch[0];
-      // 補齊未加雙引號的 key，轉為合法 JSON
-      const jsonStr = cleaned
-        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
-        .replace(/'/g, '"')
-        .replace(/,\s*}/g, '}');
-      return JSON.parse(jsonStr);
+      const braceMatch = rawText.match(/\{[\s\S]*\}/);
+      if (!braceMatch) throw new Error('找不到 { ... } 設定區塊，請確認有複製大括號內的設定碼。');
+      return new Function('return (' + braceMatch[0] + ')')();
     }
 
     function initFirebaseSync(configObj, roomId, isInitialSetup = false) {
       try {
-        if (!configObj.databaseURL) {
-          throw new Error('設定碼中缺少 databaseURL，請確認已在 Firebase 啟用 Realtime Database 並重新複製設定碼。');
+        if (!configObj || typeof configObj !== 'object') {
+          throw new Error('設定碼格式不正確');
         }
-        const safeRoom = roomId.replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!configObj.databaseURL && configObj.projectId) {
+          configObj.databaseURL = `https://${configObj.projectId}-default-rtdb.asia-southeast1.firebasedatabase.app`;
+        }
+        if (!configObj.databaseURL) {
+          throw new Error('設定碼中缺少 databaseURL，請確認已在 Firebase 啟用 Realtime Database。');
+        }
+        const safeRoom = roomId.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '');
         if (!safeRoom) {
-          throw new Error('家庭共享空間代碼只能包含英文字母、數字、底線或連字號。');
+          throw new Error('家庭共享空間代碼請輸入英文字母或數字（例如 beauty-stock）。');
         }
 
         if (firebase.apps.length) {
@@ -590,11 +585,9 @@
 
         updateSyncBadge('connected', `已同步：${safeRoom}`);
 
-        // 監聽雲端即時資料變動
         dbRef.on('value', (snapshot) => {
           const val = snapshot.val();
           if (!val) {
-            // 若雲端空間是全新的，自動把本機現有資料上傳初始化
             if (isInitialSetup || items.length > 0) {
               dbRef.set({
                 items,
@@ -622,7 +615,7 @@
           alert('Firebase 連線失敗：' + err.message);
         });
 
-        return true;
+        return safeRoom;
       } catch (e) {
         updateSyncBadge('error', '設定格式錯誤');
         alert('Firebase 設定解析失敗：' + e.message);
@@ -649,12 +642,12 @@
       }
       try {
         const cfgObj = parseFirebaseConfigInput(rawCfg);
-        const ok = initFirebaseSync(cfgObj, roomId, true);
-        if (ok) {
-          localStorage.setItem(FIREBASE_ROOM_KEY, roomId);
+        const connectedRoom = initFirebaseSync(cfgObj, roomId, true);
+        if (connectedRoom) {
+          localStorage.setItem(FIREBASE_ROOM_KEY, connectedRoom);
           localStorage.setItem(FIREBASE_CFG_KEY, JSON.stringify(cfgObj, null, 2));
           closeSyncModal();
-          alert(`已成功連線至共享空間「${roomId}」！現在只要在另一支手機輸入相同設定，雙方資料就會即時同步。`);
+          alert(`已成功連線至共享空間「${connectedRoom}」！現在只要在另一支手機輸入相同設定，雙方資料就會即時同步。`);
         }
       } catch (err) {
         alert('Config 格式無法解析，請確認完整複製了 { ... } 內容：\n' + err.message);
@@ -1392,7 +1385,6 @@
       reader.readAsText(file);
     }
 
-    // 啟動時檢查是否已儲存 Firebase 設定，若已設定則自動連線同步
     (function bootstrapCloudSync() {
       const savedRoom = localStorage.getItem(FIREBASE_ROOM_KEY);
       const savedCfg = localStorage.getItem(FIREBASE_CFG_KEY);
