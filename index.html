@@ -30,7 +30,7 @@
           <h1 class="text-base font-bold text-slate-800 truncate">美妝與日用品庫存管家</h1>
           <div class="flex items-center gap-1.5 text-[11px] text-slate-500">
             <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-            <span id="syncStatusText" class="truncate">本機模式（點擊右側設定雲端）</span>
+            <span id="syncStatusText" class="truncate">正在載入資料...</span>
           </div>
         </div>
       </div>
@@ -263,81 +263,166 @@
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Firebase Realtime Database 網址（選填，跨裝置同步用）</label>
+          <label class="block font-bold text-slate-700 mb-1">Firebase Realtime Database 網址（跨裝置同步用）</label>
           <input type="url" id="settingFirebaseUrl" placeholder="https://你的專案.firebaseio.com"
             class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">家庭共享空間代碼（與家人填相同代碼即可同步）</label>
-          <input type="text" id="settingSpaceId" placeholder="例如：huang_family_2026"
+          <label class="block font-bold text-slate-700 mb-1">家庭共享空間代碼（與原本設定相同即可載入舊資料）</label>
+          <input type="text" id="settingSpaceId" placeholder="例如：Beauty-stock 或 你的空間名稱"
             class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
         </div>
       </div>
 
       <div class="flex gap-2 pt-2">
         <button onclick="closeSettingsModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">關閉</button>
-        <button onclick="saveCloudSettings()" class="flex-1 py-2.5 rounded-xl bg-sky-600 text-white text-xs font-bold">儲存並連線</button>
+        <button onclick="saveCloudSettings()" class="flex-1 py-2.5 rounded-xl bg-sky-600 text-white text-xs font-bold">儲存並同步舊資料</button>
       </div>
     </div>
   </div>
 
   <script>
     const DEFAULT_WORKER_URL = 'https://beauty-stock-api.wenhao0521.workers.dev';
-    let inventory = JSON.parse(localStorage.getItem('beauty_inventory_v2') || '[]');
-    let localBarcodeMemory = JSON.parse(localStorage.getItem('beauty_barcode_memory') || '{}');
+    const PRIMARY_STORAGE_KEY = 'beauty_stock_items';
+    let inventory = [];
+    let localBarcodeMemory = JSON.parse(localStorage.getItem('beauty_barcode_memory') || localStorage.getItem('barcode_cache') || '{}');
     let currentCategory = '全部';
     let currentFilter = 'all';
     let html5QrCode = null;
+
+    // 自動相容載入舊版所有可能的 localStorage 鍵名，確保本機紀錄一筆不漏
+    function loadMergedLocalInventory() {
+      const candidateKeys = [
+        'beauty_stock_items',
+        'beauty_inventory',
+        'beauty_inventory_v1',
+        'beauty_inventory_v2',
+        'cosmetic_inventory',
+        'skincare_inventory',
+        'items'
+      ];
+      const map = new Map();
+      for (const k of candidateKeys) {
+        try {
+          const raw = localStorage.getItem(k);
+          if (!raw) continue;
+          const parsed = JSON.parse(raw);
+          const list = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? Object.values(parsed) : []);
+          for (const it of list) {
+            if (it && (it.name || it.brand)) {
+              const id = it.id || ('legacy_' + (it.barcode || it.name));
+              it.id = id;
+              map.set(id, it);
+            }
+          }
+        } catch (e) {}
+      }
+      return Array.from(map.values());
+    }
+
+    function saveLocalInventory() {
+      localStorage.setItem(PRIMARY_STORAGE_KEY, JSON.stringify(inventory));
+    }
+
+    // 自動相容讀取舊版 Firebase 設定鍵名
+    function getFirebaseConfig() {
+      const dbUrl = (
+        localStorage.getItem('beauty_firebase_url') ||
+        localStorage.getItem('beauty_fb_url') ||
+        localStorage.getItem('firebaseUrl') ||
+        localStorage.getItem('fb_db_url') ||
+        ''
+      ).trim().replace(/\/+$/, '');
+
+      const spaceId = (
+        localStorage.getItem('beauty_space_id') ||
+        localStorage.getItem('beauty_room_id') ||
+        localStorage.getItem('spaceId') ||
+        localStorage.getItem('roomId') ||
+        ''
+      ).trim();
+
+      return { dbUrl, spaceId };
+    }
 
     // 初始化設定與同步
     window.addEventListener('DOMContentLoaded', () => {
       if (!localStorage.getItem('beauty_ai_worker_url')) {
         localStorage.setItem('beauty_ai_worker_url', DEFAULT_WORKER_URL);
       }
+      inventory = loadMergedLocalInventory();
       renderItems();
       syncFromFirebase();
     });
 
-    function getFirebaseConfig() {
-      return {
-        dbUrl: (localStorage.getItem('beauty_fb_url') || '').trim().replace(/\/+$/, ''),
-        spaceId: (localStorage.getItem('beauty_space_id') || 'default_home').trim()
-      };
-    }
-
+    // 智慧相容同步：同時檢查舊版 spaces/{spaceId}/items 與 rooms/{spaceId}/items 路徑
     async function syncFromFirebase() {
       const { dbUrl, spaceId } = getFirebaseConfig();
       const dot = document.getElementById('syncStatusDot');
       const txt = document.getElementById('syncStatusText');
+
       if (!dbUrl) {
         dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-        txt.textContent = 'AI 辨識已就緒（本機儲存）';
+        txt.textContent = inventory.length > 0
+          ? `本機模式（已載入 ${inventory.length} 筆）`
+          : 'AI 辨識已就緒（點右側可連 Firebase）';
         return;
       }
-      try {
-        const res = await fetch(`${dbUrl}/spaces/${encodeURIComponent(spaceId)}/items.json`);
-        if (res.ok) {
+
+      const folder = spaceId || 'default';
+      const candidatePaths = [
+        `${dbUrl}/spaces/${encodeURIComponent(folder)}/items.json`,
+        `${dbUrl}/rooms/${encodeURIComponent(folder)}/items.json`,
+        `${dbUrl}/users/${encodeURIComponent(folder)}/items.json`,
+        `${dbUrl}/inventory/${encodeURIComponent(folder)}.json`,
+        `${dbUrl}/items.json`
+      ];
+
+      let synced = false;
+      for (const path of candidatePaths) {
+        try {
+          const res = await fetch(path);
+          if (!res.ok) continue;
           const data = await res.json();
           if (data && typeof data === 'object') {
-            inventory = Object.values(data);
-            localStorage.setItem('beauty_inventory_v2', JSON.stringify(inventory));
-            renderItems();
+            const remoteList = Object.entries(data)
+              .map(([k, v]) => (v && typeof v === 'object' ? { id: v.id || k, ...v } : null))
+              .filter(x => x && (x.name || x.brand));
+
+            if (remoteList.length > 0) {
+              // 合併雲端與本機資料，避免覆蓋遺失
+              const merged = new Map();
+              inventory.forEach(x => merged.set(x.id, x));
+              remoteList.forEach(x => merged.set(x.id, x));
+              inventory = Array.from(merged.values());
+              saveLocalInventory();
+              localStorage.setItem('beauty_active_fb_base', path.replace(/\.json$/, ''));
+              renderItems();
+              synced = true;
+              break;
+            }
           }
-          dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-          txt.textContent = `已同步：${spaceId}`;
-        }
-      } catch (e) {
-        dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-        txt.textContent = '離線快取模式';
+        } catch (e) {}
       }
+
+      dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+      txt.textContent = `已同步：${spaceId || 'Firebase 雲端'}${synced ? '' : '（就緒）'}`;
+    }
+
+    function getActiveFirebaseBaseUrl() {
+      const cachedBase = localStorage.getItem('beauty_active_fb_base');
+      if (cachedBase) return cachedBase;
+      const { dbUrl, spaceId } = getFirebaseConfig();
+      if (!dbUrl) return '';
+      return `${dbUrl}/spaces/${encodeURIComponent(spaceId || 'default')}/items`;
     }
 
     async function pushToFirebase(item) {
-      const { dbUrl, spaceId } = getFirebaseConfig();
-      if (!dbUrl) return;
+      const baseUrl = getActiveFirebaseBaseUrl();
+      if (!baseUrl) return;
       try {
-        await fetch(`${dbUrl}/spaces/${encodeURIComponent(spaceId)}/items/${encodeURIComponent(item.id)}.json`, {
+        await fetch(`${baseUrl}/${encodeURIComponent(item.id)}.json`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(item)
@@ -346,10 +431,10 @@
     }
 
     async function deleteFromFirebase(id) {
-      const { dbUrl, spaceId } = getFirebaseConfig();
-      if (!dbUrl) return;
+      const baseUrl = getActiveFirebaseBaseUrl();
+      if (!baseUrl) return;
       try {
-        await fetch(`${dbUrl}/spaces/${encodeURIComponent(spaceId)}/items/${encodeURIComponent(id)}.json`, {
+        await fetch(`${baseUrl}/${encodeURIComponent(id)}.json`, {
           method: 'DELETE'
         });
       } catch (e) {}
@@ -371,7 +456,7 @@
           reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-              // 1. 辨識用壓縮圖（長邊 1024px，確保清晰且上傳快速不超時）
+              // 1. 辨識用壓縮圖（長邊 1024px，清晰度高且上傳快速不超時）
               const maxAiSize = 1024;
               let w1 = img.width, h1 = img.height;
               if (w1 > maxAiSize || h1 > maxAiSize) {
@@ -496,13 +581,11 @@
       statusBox.classList.remove('hidden');
       statusText.innerHTML = `🔍 正在查詢條碼 <b>${code}</b>...`;
 
-      // 1. 本機記憶庫
       if (localBarcodeMemory[code]) {
         applyBarcodeRecord(localBarcodeMemory[code], '本機記憶庫');
         return;
       }
 
-      // 2. Firebase 群眾共享池
       const { dbUrl } = getFirebaseConfig();
       if (dbUrl) {
         try {
@@ -519,7 +602,6 @@
         } catch (e) {}
       }
 
-      // 3. Cloudflare Worker 外部查詢
       try {
         const workerUrl = (localStorage.getItem('beauty_ai_worker_url') || DEFAULT_WORKER_URL).trim().replace(/\/+$/, '');
         const res = await fetch(`${workerUrl}/barcode?code=${encodeURIComponent(code)}`);
@@ -544,7 +626,6 @@
       document.getElementById('ocrStatusText').innerHTML = `⚡ 已從 <b>${sourceLabel}</b> 0 秒帶入完整商品資料！`;
     }
 
-    // 相機掃條碼
     function startBarcodeScanner() {
       const container = document.getElementById('scannerContainer');
       container.classList.remove('hidden');
@@ -579,7 +660,6 @@
       [b.value, n.value] = [n.value, b.value];
     }
 
-    // 彈窗控制與儲存
     function openItemModal(item = null) {
       document.getElementById('itemForm').reset();
       document.getElementById('ocrResultBox').classList.add('hidden');
@@ -642,10 +722,9 @@
       if (idx >= 0) inventory[idx] = newItem;
       else inventory.unshift(newItem);
 
-      localStorage.setItem('beauty_inventory_v2', JSON.stringify(inventory));
+      saveLocalInventory();
       await pushToFirebase(newItem);
 
-      // 若有填寫條碼，同步寫入本機與 Firebase 群眾共享池
       if (barcode && name) {
         const meta = { brand, name, category, pao, updatedAt: Date.now() };
         localBarcodeMemory[barcode] = meta;
@@ -670,7 +749,7 @@
       if (!item) return;
       item.qty = Math.max(0, (item.qty || 0) + delta);
       item.updatedAt = Date.now();
-      localStorage.setItem('beauty_inventory_v2', JSON.stringify(inventory));
+      saveLocalInventory();
       renderItems();
       await pushToFirebase(item);
     }
@@ -678,20 +757,17 @@
     async function removeItem(id) {
       if (!confirm('確定要刪除這筆庫存紀錄嗎？')) return;
       inventory = inventory.filter(x => x.id !== id);
-      localStorage.setItem('beauty_inventory_v2', JSON.stringify(inventory));
+      saveLocalInventory();
       renderItems();
       await deleteFromFirebase(id);
     }
 
-    // 效期計算與渲染
     function getExpiryStatus(item) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       let deadlines = [];
 
-      if (item.expDate) {
-        deadlines.push(new Date(item.expDate));
-      }
+      if (item.expDate) deadlines.push(new Date(item.expDate));
       if (item.openDate && item.pao > 0) {
         const paoDate = new Date(item.openDate);
         paoDate.setMonth(paoDate.getMonth() + item.pao);
@@ -749,7 +825,7 @@
         if (currentFilter === 'low' && !(item.minQty !== null && item.qty <= item.minQty)) return false;
 
         if (q) {
-          const hay = `${item.brand} ${item.name} ${item.note} ${item.barcode}`.toLowerCase();
+          const hay = `${item.brand || ''} ${item.name || ''} ${item.note || ''} ${item.barcode || ''}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         return true;
@@ -761,7 +837,7 @@
           <div class="bg-white rounded-3xl p-8 text-center border border-slate-100 space-y-2">
             <div class="text-3xl">🧴</div>
             <div class="text-sm font-bold text-slate-700">目前沒有符合條件的品項</div>
-            <div class="text-xs text-slate-400">點擊右上角「+ 新增」，直接拍商品正面即可用 Gemini AI 自動建檔</div>
+            <div class="text-xs text-slate-400">若之前有雲端備份，請點右上角「雲端/AI」確認 Firebase 網址與空間代碼</div>
           </div>`;
         return;
       }
@@ -785,7 +861,7 @@
 
             <div class="flex-1 min-w-0 space-y-1">
               <div class="flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">${item.category}</span>
+                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">${item.category || '保養品'}</span>
                 ${item.brand ? `<span class="text-xs font-bold text-rose-600 truncate">${item.brand}</span>` : ''}
               </div>
               <div class="text-sm font-bold text-slate-800 truncate">${item.name}</div>
@@ -800,7 +876,7 @@
             <div class="flex flex-col items-end gap-2 shrink-0">
               <div class="flex items-center gap-1.5 bg-slate-50 rounded-xl p-1 border border-slate-200/70">
                 <button onclick="adjustQty('${item.id}', -1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">-</button>
-                <span class="text-xs font-extrabold min-w-[2.2rem] text-center">${item.qty}${item.unit}</span>
+                <span class="text-xs font-extrabold min-w-[2.2rem] text-center">${item.qty ?? 1}${item.unit || '瓶'}</span>
                 <button onclick="adjustQty('${item.id}', 1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">+</button>
               </div>
               <div class="flex items-center gap-2 text-xs text-slate-400">
@@ -812,11 +888,11 @@
       }).join('');
     }
 
-    // 設定彈窗
     function openSettingsModal() {
+      const { dbUrl, spaceId } = getFirebaseConfig();
       document.getElementById('settingWorkerUrl').value = localStorage.getItem('beauty_ai_worker_url') || DEFAULT_WORKER_URL;
-      document.getElementById('settingFirebaseUrl').value = localStorage.getItem('beauty_fb_url') || '';
-      document.getElementById('settingSpaceId').value = localStorage.getItem('beauty_space_id') || '';
+      document.getElementById('settingFirebaseUrl').value = dbUrl;
+      document.getElementById('settingSpaceId').value = spaceId;
       document.getElementById('settingsModal').classList.remove('hidden');
     }
 
@@ -830,8 +906,10 @@
       const sId = document.getElementById('settingSpaceId').value.trim();
 
       localStorage.setItem('beauty_ai_worker_url', wUrl);
+      localStorage.setItem('beauty_firebase_url', fUrl);
       localStorage.setItem('beauty_fb_url', fUrl);
       localStorage.setItem('beauty_space_id', sId);
+      localStorage.removeItem('beauty_active_fb_base');
 
       closeSettingsModal();
       syncFromFirebase();
