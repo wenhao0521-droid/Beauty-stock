@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="庫存管家" />
   <link rel="manifest" href="./manifest.json" />
-  <title>美妝與日用品庫存管家</title>
+  <title>美妝與日用品庫存管家 Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -24,10 +24,9 @@
 </head>
 <body class="text-slate-800 antialiased pb-20">
 
-  <!-- 頂部導覽列（手機友善雙層橫向排版） -->
+  <!-- 頂部導覽列 -->
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 py-2.5">
     <div class="max-w-5xl mx-auto space-y-2.5">
-      <!-- 第一層：橫向完整標題 + 雲端同步狀態 -->
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center text-white shadow-sm shrink-0">
@@ -42,23 +41,26 @@
         </span>
       </div>
 
-      <!-- 第二層：功能快捷按鈕列 -->
       <div class="flex items-center justify-between gap-1.5">
-        <div class="flex items-center gap-1.5">
-          <button onclick="openSyncModal()" class="px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium flex items-center gap-1 transition" title="多人雲端同步設定">
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <button onclick="openSyncModal()" class="px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium flex items-center gap-1 shrink-0 transition" title="雲端同步與 AI 後端設定">
             <i data-lucide="cloud" class="w-4 h-4"></i>
-            <span class="hidden xs:inline sm:inline">共享</span>
+            <span>雲端/AI</span>
           </button>
-          <button onclick="openShoppingModal()" class="relative px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition" title="智慧採購清單">
+          <button onclick="requestAndCheckNotifications()" class="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-medium flex items-center gap-1 shrink-0 transition" title="啟用與檢查效期提醒通知">
+            <i data-lucide="bell" class="w-4 h-4"></i>
+            <span>提醒</span>
+          </button>
+          <button onclick="openShoppingModal()" class="relative px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 shrink-0 transition" title="智慧採購清單">
             <i data-lucide="shopping-cart" class="w-4 h-4"></i>
             <span>採購</span>
             <span id="shopping-badge" class="hidden ml-0.5 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">0</span>
           </button>
-          <button onclick="openLogsModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition" title="異動紀錄">
+          <button onclick="openLogsModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 shrink-0 transition" title="異動紀錄">
             <i data-lucide="history" class="w-4 h-4"></i>
             <span>紀錄</span>
           </button>
-          <button onclick="openBackupModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition" title="備份與還原">
+          <button onclick="openBackupModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 shrink-0 transition" title="備份與還原">
             <i data-lucide="database-backup" class="w-4 h-4"></i>
             <span>備份</span>
           </button>
@@ -115,7 +117,7 @@
     <!-- 空瓶記帳成就橫幅 -->
     <section class="bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 border border-rose-100 rounded-2xl p-3.5 flex items-center justify-between">
       <div>
-        <div class="text-xs font-semibold text-rose-700">空瓶記帳成就</div>
+        <div class="text-xs font-semibold text-rose-700">空瓶記帳成就 (Project Pan)</div>
         <div class="flex items-baseline gap-1.5 mt-0.5">
           <span id="stat-empties" class="text-2xl font-bold text-rose-600">0</span>
           <span class="text-xs text-rose-500 font-medium">瓶/件</span>
@@ -139,7 +141,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
         <div class="sm:col-span-5 relative">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-          <input id="search-input" type="text" oninput="renderItems()" placeholder="搜尋中/日/英品牌、品名或條碼..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400" />
+          <input id="search-input" type="text" oninput="renderItems()" placeholder="搜尋品牌、品名、色號/批號或條碼..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-slate-400" />
         </div>
         <div class="sm:col-span-3">
           <select id="filter-status" onchange="renderItems()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none">
@@ -184,34 +186,53 @@
         </button>
       </div>
 
-      <!-- 智慧掃碼 + 拍照辨識雙工具列 -->
+      <!-- 智慧掃碼 + AI 視覺辨識雙工具列 -->
       <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-2.5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <span class="text-xs font-semibold text-slate-700 block">智慧條碼查詢 & 瓶身辨識</span>
-            <span class="text-[11px] text-slate-400">支援條碼掃描、免金鑰電商搜尋與包裝 OCR</span>
+            <span class="text-xs font-semibold text-slate-700 block">智慧條碼查詢 & AI 視覺辨識</span>
+            <span id="ai-mode-hint" class="text-[11px] text-slate-400">支援群眾條碼庫、背景自動查詢與瓶身辨識</span>
           </div>
           <div class="flex items-center gap-1.5">
             <button type="button" onclick="toggleCameraScanner()" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-medium flex items-center gap-1.5 hover:bg-rose-700 shadow-xs">
               <i data-lucide="scan-barcode" class="w-4 h-4"></i>
               <span id="cam-btn-text">掃條碼</span>
             </button>
-            <label class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-medium flex items-center gap-1.5 hover:opacity-95 shadow-xs cursor-pointer">
-              <i data-lucide="camera" class="w-4 h-4"></i>
-              <span>拍瓶身辨識</span>
-              <input id="ocr-photo-input" type="file" accept="image/*" capture="environment" onchange="handleOfflineOcrCapture(event)" class="hidden" />
+            <label class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-emerald-600 text-white text-xs font-medium flex items-center gap-1.5 hover:opacity-95 shadow-xs cursor-pointer">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+              <span id="vision-btn-text">AI 拍瓶身</span>
+              <input id="ocr-photo-input" type="file" accept="image/*" capture="environment" onchange="handleSmartBottleCapture(event)" class="hidden" />
             </label>
           </div>
         </div>
 
         <div id="qr-reader" class="hidden rounded-xl overflow-hidden border border-slate-200 bg-black"></div>
-
-        <!-- 辨識與查詢狀態提示列 -->
         <div id="barcode-status-box" class="hidden rounded-xl p-2.5 text-xs space-y-2"></div>
       </div>
 
       <form id="item-form" onsubmit="saveItem(event)" class="space-y-3.5">
         <input type="hidden" id="item-id" />
+        <input type="hidden" id="item-image-data" />
+
+        <!-- 商品封面縮圖區塊 -->
+        <div class="flex items-center gap-3 bg-slate-50/80 p-2.5 rounded-2xl border border-slate-200/70">
+          <div id="item-thumb-preview" class="w-14 h-14 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-300 overflow-hidden shrink-0">
+            <i data-lucide="image" class="w-6 h-6"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-semibold text-slate-700">商品封面縮圖 (選填)</div>
+            <div class="text-[11px] text-slate-400 truncate">自動帶入或拍一張實品照，辨識色號包裝更直覺</div>
+            <div class="flex items-center gap-2 mt-1.5">
+              <label class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[11px] font-medium cursor-pointer flex items-center gap-1">
+                <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                <span>拍實品縮圖</span>
+                <input type="file" accept="image/*" onchange="handleCoverThumbUpload(event)" class="hidden" />
+              </label>
+              <button type="button" id="btn-clear-thumb" onclick="clearCoverThumb()" class="hidden text-[11px] text-rose-500 hover:underline">移除照片</button>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">商品分類 *</label>
@@ -288,10 +309,10 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-2.5">
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">存放位置</label>
-            <select id="item-location" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm">
+            <select id="item-location" class="w-full px-2.5 py-2 border border-slate-200 rounded-xl text-sm">
               <option value="浴室鏡櫃">浴室鏡櫃</option>
               <option value="化妝台">化妝台</option>
               <option value="囤貨箱">囤貨箱</option>
@@ -301,10 +322,14 @@
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">使用成員</label>
-            <select id="item-owner" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm">
+            <select id="item-owner" class="w-full px-2.5 py-2 border border-slate-200 rounded-xl text-sm">
               <option value="自己">自己</option>
               <option value="家人共用">家人共用</option>
             </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">色號 / 批號</label>
+            <input id="item-note" type="text" placeholder="例：#02 / 24A" class="w-full px-2.5 py-2 border border-slate-200 rounded-xl text-sm" />
           </div>
         </div>
 
@@ -316,44 +341,48 @@
     </div>
   </div>
 
-  <!-- Firebase 多人即時同步設定 Modal -->
+  <!-- Firebase 多人即時同步 & Cloudflare AI 後端代理設定 Modal -->
   <div id="sync-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-5 space-y-4 shadow-xl">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h2 class="text-lg font-bold text-slate-900">多人即時雲端同步 (Firebase)</h2>
+        <h2 class="text-lg font-bold text-slate-900">雲端同步 & AI 後端代理設定</h2>
         <button onclick="closeSyncModal()" class="p-1.5 rounded-full hover:bg-slate-100 text-slate-500"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
-      <div class="bg-sky-50 border border-sky-200/80 rounded-2xl p-3 text-xs text-sky-900 space-y-1.5 leading-relaxed">
-        <div class="font-semibold">如何與家人共享同一份庫存？</div>
-        <p>1. 在兩支手機分別貼上同一份 <strong>Firebase Config 設定碼</strong> 與自訂的<strong>家庭共享代碼</strong>（請用英文或連字號，勿含空格）。</p>
-        <p>2. 任一方新增、消耗或空瓶，另一方畫面會在 1 秒內自動即時更新。</p>
+      <div class="bg-sky-50 border border-sky-200/80 rounded-2xl p-3 text-xs text-sky-900 space-y-1 leading-relaxed">
+        <div class="font-semibold">商業級三層架構連線設定</div>
+        <p>• <strong>Firebase 連線</strong>：啟用家庭即時同步與「全體群眾共享條碼庫」。</p>
+        <p>• <strong>Cloudflare Worker 後端代理（選填）</strong>：填入 Worker 網址後，掃條碼會全自動背景抓取台日商品，拍瓶身則啟用 Gemini AI 視覺辨識。</p>
       </div>
 
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">1. 家庭共享空間代碼 (例：Beauty--stock)</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">1. Cloudflare Worker 後端代理網址 (選填)</label>
+          <input id="sync-worker-url" type="url" placeholder="https://beauty-stock-api.你的帳號.workers.dev" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">2. 家庭共享空間代碼 (例：Beauty--stock)</label>
           <input id="sync-room-id" type="text" placeholder="例：Beauty--stock" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">2. 貼上 Firebase Config（從 Firebase 專案設定複製整段即可）</label>
-          <textarea id="sync-firebase-config" rows="6" placeholder='const firebaseConfig = {
+          <label class="block text-xs font-medium text-slate-600 mb-1">3. 貼上 Firebase Config 設定碼</label>
+          <textarea id="sync-firebase-config" rows="5" placeholder='const firebaseConfig = {
   apiKey: "AIzaSy...",
   authDomain: "xxx.firebaseapp.com",
   databaseURL: "https://xxx.firebasedatabase.app",
-  projectId: "xxx",
-  ...
+  projectId: "xxx"
 };' class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:border-sky-400"></textarea>
         </div>
 
         <div class="flex flex-wrap gap-2 pt-1">
-          <button type="button" onclick="saveAndConnectFirebase()" class="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium transition">儲存並立即連線</button>
+          <button type="button" onclick="saveAndConnectFirebase()" class="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium transition">儲存設定並立即連線</button>
           <button type="button" onclick="pushLocalToCloudForce()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition" title="將目前手機上的本機資料覆蓋上傳至雲端">本機上傳覆蓋雲端</button>
         </div>
 
         <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
-          <button type="button" onclick="copyShareInvite()" class="text-xs text-sky-600 font-semibold hover:underline">📋 複製連線設定傳給家人</button>
+          <button type="button" onclick="copyShareInvite()" class="text-xs text-sky-600 font-semibold hover:underline">📋 複製完整設定傳給家人</button>
           <button type="button" onclick="disconnectFirebase()" class="text-xs text-rose-500 hover:underline">中斷連線改回單機</button>
         </div>
       </div>
@@ -393,7 +422,7 @@
         <h2 class="text-lg font-bold text-slate-900">資料備份與還原</h2>
         <button onclick="closeBackupModal()" class="p-1.5 rounded-full hover:bg-slate-100 text-slate-500"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-      <p class="text-xs text-slate-500 leading-relaxed">所有資料（包含您建檔的自訂條碼與自學習品牌庫）皆可匯出為 JSON 備份檔保存。</p>
+      <p class="text-xs text-slate-500 leading-relaxed">所有資料（包含您建檔的自訂條碼、縮圖與自學習品牌庫）皆可匯出為 JSON 備份檔保存。</p>
       <div class="space-y-2.5">
         <button onclick="exportData()" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800">匯出 JSON 備份檔</button>
         <label class="block w-full py-2.5 rounded-xl border border-slate-200 text-center text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
@@ -411,7 +440,6 @@
       });
     }
 
-    // 專屬 Google 程式化搜尋引擎 ID（免 API Key，直接開啟網頁搜尋並支援切回自動解析剪貼簿）
     const GOOGLE_CSE_CX = '267d2c4c2824e41f6';
     let pendingExternalSearchBarcode = null;
 
@@ -422,18 +450,31 @@
     const CUSTOM_BRANDS_KEY = 'beauty_stock_custom_brands_v1';
     const FIREBASE_CFG_KEY = 'beauty_stock_firebase_cfg_v1';
     const FIREBASE_ROOM_KEY = 'beauty_stock_firebase_room_v1';
+    const WORKER_URL_KEY = 'beauty_stock_worker_url_v1';
 
     let items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let logs = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
     let emptiesCount = parseInt(localStorage.getItem(EMPTIES_KEY) || '0', 10);
     let customBarcodeDict = JSON.parse(localStorage.getItem(BARCODE_CACHE_KEY)) || {};
     let customBrands = JSON.parse(localStorage.getItem(CUSTOM_BRANDS_KEY)) || [];
+    let workerProxyUrl = (localStorage.getItem(WORKER_URL_KEY) || '').replace(/\/$/, '');
     let currentCategory = '全部';
     let html5QrCode = null;
     let lastOcrLines = [];
 
     let dbRef = null;
+    let globalBarcodesRef = null;
     let isRemoteUpdating = false;
+
+    const BUILTIN_COMMON_BARCODES = {
+      '4987241174508': { category: '日用品', brand: 'ROHTO 樂敦', name: 'Vロートコンタクトプレミアム 15ml', pao: 3, unit: '瓶' },
+      '4903111254903': { category: '日用品', brand: 'Unicharm 嬌聯', name: '絲花（Silcot）化妝棉（80片裝）', pao: 0, unit: '盒' },
+      '4987241127023': { category: '保養品', brand: 'Hada Labo 肌研', name: '極潤保濕化妝水 170ml', pao: 12, unit: '瓶' },
+      '4987241135011': { category: '保養品', brand: 'Melano CC', name: '高純度維他命C亮白精華 20ml', pao: 6, unit: '支' },
+      '4901301236210': { category: '保養品', brand: 'Curél 珂潤', name: '潤浸保濕深層乳霜 40g', pao: 12, unit: '罐' },
+      '4901872444915': { category: '保養品', brand: 'SENKA 專科', name: '超微米潔顏乳 120g', pao: 12, unit: '條' },
+      '4511413309650': { category: '保養品', brand: 'DHC', name: '純欖護唇膏 1.5g', pao: 12, unit: '支' }
+    };
 
     const BRAND_DICTIONARY = [
       { keys: ['SHISEIDO', '資生堂', 'シセイドウ'], brand: 'SHISEIDO 資生堂' },
@@ -525,8 +566,7 @@
       { keys: ['UNICHARM', 'ユニ・チャーム', 'ユニチャーム', '嬌聯', '絲花', 'SILCOT', 'シルコット'], brand: 'Unicharm 嬌聯' },
       { keys: ['蘇菲', 'SOFY', 'ソフィ'], brand: 'SOFY 蘇菲' },
       { keys: ['蕾妮亞', 'LAURIER', 'ロリエ'], brand: 'Laurier 蕾妮亞' },
-      { keys: ['靠得住', 'KOTEX'], brand: 'Kotex 靠得住' },
-      { keys: ['白蘭氏', 'BRAND\'S'], brand: '白蘭氏' }
+      { keys: ['靠得住', 'KOTEX'], brand: 'Kotex 靠得住' }
     ];
 
     function isItemLowStock(item) {
@@ -536,11 +576,85 @@
       return Number(item.qty) <= minVal;
     }
 
-    // 清洗台日電商與日本藥妝網站標題並自動拆出品牌與品名
+    async function requestAndCheckNotifications(silent = false) {
+      const expiringItems = items.filter(i => {
+        const eff = getEffectiveExpiry(i);
+        return eff && eff.diffDays <= 30;
+      });
+
+      if (!('Notification' in window)) {
+        if (!silent) alert(expiringItems.length ? `目前有 ${expiringItems.length} 項商品即將過期或已過期，請留意卡片上的效期標籤！` : '目前沒有 30 天內即將過期的商品。');
+        return;
+      }
+
+      let perm = Notification.permission;
+      if (perm === 'default' && !silent) {
+        perm = await Notification.requestPermission();
+      }
+
+      if (perm === 'granted') {
+        if (expiringItems.length > 0) {
+          const names = expiringItems.slice(0, 3).map(i => `${i.brand ? i.brand + ' ' : ''}${i.name}`).join('、');
+          new Notification('美妝與日用品效期提醒', {
+            body: `您有 ${expiringItems.length} 項商品已過期或將在 30 天內到期（${names}...）`,
+            tag: 'beauty-stock-expiry-alert'
+          });
+          if (!silent) alert(`已發送效期通知！共有 ${expiringItems.length} 項商品需留意。`);
+        } else if (!silent) {
+          alert('✅ 提醒已啟用！目前所有庫存商品效期皆大於 30 天。');
+        }
+      } else if (!silent) {
+        alert('請在手機瀏覽器設定中允許「通知權限」，即可收到商品過期主動提醒！');
+      }
+    }
+
+    function setCoverThumbPreview(dataUrl) {
+      const preview = document.getElementById('item-thumb-preview');
+      const clearBtn = document.getElementById('btn-clear-thumb');
+      document.getElementById('item-image-data').value = dataUrl || '';
+      if (dataUrl) {
+        preview.innerHTML = `<img src="${dataUrl}" class="w-full h-full object-cover" alt="商品縮圖" />`;
+        clearBtn.classList.remove('hidden');
+      } else {
+        preview.innerHTML = `<i data-lucide="image" class="w-6 h-6"></i>`;
+        clearBtn.classList.add('hidden');
+        lucide.createIcons();
+      }
+    }
+
+    function clearCoverThumb() {
+      setCoverThumbPreview('');
+    }
+
+    function handleCoverThumbUpload(event) {
+      const file = event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxSize = 240;
+          let w = img.width, h = img.height;
+          if (w > maxSize || h > maxSize) {
+            if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+            else { w = Math.round(w * maxSize / h); h = maxSize; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          setCoverThumbPreview(canvas.toDataURL('image/jpeg', 0.72));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
     function parseBrandAndNameFromTitle(rawTitle) {
       if (!rawTitle) return { brand: '', name: '', category: '' };
 
-      // 1. 移除常見台日電商平台後綴、條碼庫後綴與促銷括號標籤
       let cleaned = rawTitle
         .replace(/\s*[-|｜_・]\s*(momo購物網|蝦皮購物|PChome.*|康是美.*|屈臣氏.*|博客來.*|楽天市場|Amazon\.co\.jp|@cosme.*|Yahoo!.*|LINE購物|ヨドバシ\.com|マツキヨココカラ.*|サンドラッグ.*|JANコード.*|JANCODE.*).*$/i, '')
         .replace(/【(官方直營|熱銷|限時|買一送一|免運|任選|公司貨|正品|日本原裝|超值組|特惠組|現貨|預購|滿額贈|折扣|楽天市場|メール便|送料無料|第[123]類医薬品)】/g, ' ')
@@ -552,7 +666,6 @@
       let detectedBrand = '';
       let matchedKey = '';
 
-      // 2. 優先檢查開頭【品牌】或 [品牌] 格式
       const bracketMatch = cleaned.match(/^[【\[]([^】\]]{1,20})[】\]]\s*(.+)$/);
       if (bracketMatch) {
         const candidate = bracketMatch[1].trim();
@@ -563,7 +676,6 @@
         }
       }
 
-      // 3. 比對自學習品牌與內建台日美妝品牌字典
       const upperTitle = cleaned.toUpperCase();
       if (!detectedBrand) {
         for (const cb of customBrands) {
@@ -585,7 +697,6 @@
         }
       }
 
-      // 4. 針對「日本嬌聯（Unicharm）絲花（Silcot）化妝棉...」這類帶括號英文的品牌開頭進行智慧切分
       let finalName = cleaned;
       if (detectedBrand && matchedKey) {
         const escapedKey = matchedKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -598,7 +709,6 @@
           if (stripped.length >= 2) finalName = stripped;
         }
       } else if (!detectedBrand) {
-        // 字典未收錄時的備援：若開頭為「品牌名（EnglishName） 剩餘品名」，自動拆出品牌
         const genericParenBrand = finalName.match(/^([^\s（(]{2,12}[（(][A-Za-z0-9\s.&'-]{2,25}[）)])\s+(.{3,})$/);
         if (genericParenBrand) {
           detectedBrand = genericParenBrand[1].trim();
@@ -606,7 +716,6 @@
         }
       }
 
-      // 5. 自動猜測分類（加入化妝棉、コットン等日用品關鍵字）
       let category = '';
       if (/口紅|唇膏|唇釉|粉底|氣墊|粉餅|遮瑕|眉筆|眼影|睫毛膏|腮紅|隔離霜|妝前乳|定妝|蜜粉|リップ|ファンデーション|パウダー|アイシャドウ|マスカラ|チーク|下地/i.test(finalName)) {
         category = '化妝品';
@@ -619,7 +728,6 @@
       return { brand: detectedBrand, name: finalName.slice(0, 80), category };
     }
 
-    // 免 API Key：直接開啟專屬 Google 程式化搜尋引擎網頁查詢該條碼
     function openFreeGoogleSearch(barcode) {
       const cleanCode = (barcode || document.getElementById('item-barcode').value || '').trim();
       if (!cleanCode) return;
@@ -628,7 +736,6 @@
       window.open(searchUrl, '_blank', 'noopener');
     }
 
-    // 貼上並自動解析剪貼簿中的商品標題
     async function pasteAndParseClipboardTitle(isAutoTrigger = false) {
       try {
         if (!navigator.clipboard || !navigator.clipboard.readText) return;
@@ -651,7 +758,7 @@
         statusBox.classList.remove('hidden');
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 space-y-1.5';
         statusBox.innerHTML = `
-          <div>✨ <strong>已自動解析複製的商品標題並填入！</strong>（若品牌與品名有微調需求可點「⇄ 互換」，儲存後即永久同步給全家人）</div>
+          <div>✨ <strong>已自動解析複製的商品標題並填入！</strong>（若品牌與品名有微調需求可點「⇄ 互換」，儲存後即同步至群眾共享條碼庫）</div>
         `;
       } catch (err) {
         if (!isAutoTrigger) {
@@ -660,7 +767,6 @@
       }
     }
 
-    // 當使用者在外部搜尋視窗複製標題後切回 App 時，自動嘗試偵測剪貼簿
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && pendingExternalSearchBarcode) {
         pasteAndParseClipboardTitle(true);
@@ -724,19 +830,13 @@
 
     function initFirebaseSync(configObj, roomId, isInitialSetup = false) {
       try {
-        if (!configObj || typeof configObj !== 'object') {
-          throw new Error('設定碼格式不正確');
-        }
+        if (!configObj || typeof configObj !== 'object') throw new Error('設定碼格式不正確');
         if (!configObj.databaseURL && configObj.projectId) {
           configObj.databaseURL = `https://${configObj.projectId}-default-rtdb.asia-southeast1.firebasedatabase.app`;
         }
-        if (!configObj.databaseURL) {
-          throw new Error('設定碼中缺少 databaseURL，請確認已在 Firebase 啟用 Realtime Database。');
-        }
+        if (!configObj.databaseURL) throw new Error('設定碼中缺少 databaseURL，請確認已在 Firebase 啟用 Realtime Database。');
         const safeRoom = roomId.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '');
-        if (!safeRoom) {
-          throw new Error('家庭共享空間代碼請輸入英文字母或數字（例如 Beauty--stock）。');
-        }
+        if (!safeRoom) throw new Error('家庭共享空間代碼請輸入英文字母或數字（例如 Beauty--stock）。');
 
         if (firebase.apps.length) {
           firebase.apps.forEach(app => app.delete().catch(() => {}));
@@ -744,6 +844,7 @@
         const app = firebase.initializeApp(configObj);
         const database = firebase.database(app);
         dbRef = database.ref(`beauty_stock_rooms/${safeRoom}`);
+        globalBarcodesRef = database.ref('global_beauty_barcodes');
 
         updateSyncBadge('connected', `已同步：${safeRoom}`);
 
@@ -786,6 +887,7 @@
     }
 
     function openSyncModal() {
+      document.getElementById('sync-worker-url').value = workerProxyUrl || '';
       document.getElementById('sync-room-id').value = localStorage.getItem(FIREBASE_ROOM_KEY) || '';
       document.getElementById('sync-firebase-config').value = localStorage.getItem(FIREBASE_CFG_KEY) || '';
       document.getElementById('sync-modal').classList.remove('hidden');
@@ -797,11 +899,21 @@
     }
 
     function saveAndConnectFirebase() {
+      const wUrl = document.getElementById('sync-worker-url').value.trim().replace(/\/$/, '');
+      workerProxyUrl = wUrl;
+      if (wUrl) localStorage.setItem(WORKER_URL_KEY, wUrl);
+      else localStorage.removeItem(WORKER_URL_KEY);
+
       const roomId = document.getElementById('sync-room-id').value.trim();
       const rawCfg = document.getElementById('sync-firebase-config').value.trim();
-      if (!roomId || !rawCfg) {
-        return alert('請填寫「家庭共享空間代碼」與「Firebase Config 設定碼」。');
+
+      if (!roomId && !rawCfg && wUrl) {
+        closeSyncModal();
+        alert('已儲存 Cloudflare Worker AI 後端網址！');
+        return;
       }
+
+      if (!roomId || !rawCfg) return alert('請填寫「家庭共享空間代碼」與「Firebase Config 設定碼」。');
       try {
         const cfgObj = parseFirebaseConfigInput(rawCfg);
         const connectedRoom = initFirebaseSync(cfgObj, roomId, true);
@@ -809,10 +921,10 @@
           localStorage.setItem(FIREBASE_ROOM_KEY, connectedRoom);
           localStorage.setItem(FIREBASE_CFG_KEY, JSON.stringify(cfgObj, null, 2));
           closeSyncModal();
-          alert(`已成功連線至共享空間「${connectedRoom}」！現在只要在另一支手機輸入相同設定，雙方資料就會即時同步。`);
+          alert(`設定已儲存並成功連線至共享空間「${connectedRoom}」！`);
         }
       } catch (err) {
-        alert('Config 格式無法解析，請確認完整複製了 { ... } 內容：\n' + err.message);
+        alert('Config 格式無法解析：\n' + err.message);
       }
     }
 
@@ -832,17 +944,16 @@
     function copyShareInvite() {
       const roomId = document.getElementById('sync-room-id').value.trim();
       const rawCfg = document.getElementById('sync-firebase-config').value.trim();
+      const wUrl = document.getElementById('sync-worker-url').value.trim();
       if (!roomId || !rawCfg) return alert('請先填入空間代碼與 Config 再複製分享');
-      const msg = `📦 美妝與日用品庫存管家－多人同步設定\n\n網址：${window.location.href}\n\n1. 家庭共享空間代碼：\n${roomId}\n\n2. Firebase Config：\n${rawCfg}`;
+      const msg = `📦 美妝與日用品庫存管家－同步設定\n\n網址：${window.location.href}\n\n1. Worker 網址：\n${wUrl || '(無)'}\n\n2. 家庭共享空間代碼：\n${roomId}\n\n3. Firebase Config：\n${rawCfg}`;
       navigator.clipboard?.writeText(msg);
       alert('已複製完整同步設定，直接貼到 LINE 傳給家人貼上即可！');
     }
 
     function disconnectFirebase() {
-      if (dbRef) {
-        dbRef.off();
-        dbRef = null;
-      }
+      if (dbRef) { dbRef.off(); dbRef = null; }
+      globalBarcodesRef = null;
       localStorage.removeItem(FIREBASE_ROOM_KEY);
       localStorage.removeItem(FIREBASE_CFG_KEY);
       updateSyncBadge('offline', '單機模式');
@@ -868,7 +979,7 @@
       n.value = tmp;
     }
 
-    function preprocessImageForOcr(file, maxDim = 1280) {
+    function prepareImageBase64(file, maxDim = 1024, grayscale = false) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -883,9 +994,14 @@
             canvas.width = w;
             canvas.height = h;
             const ctx = canvas.getContext('2d');
-            ctx.filter = 'contrast(1.25) grayscale(1)';
+            if (grayscale) ctx.filter = 'contrast(1.25) grayscale(1)';
             ctx.drawImage(img, 0, 0, w, h);
-            resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.9), imgHeight: h });
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            resolve({
+              dataUrl,
+              base64Only: dataUrl.split(',')[1],
+              imgHeight: h
+            });
           };
           img.onerror = reject;
           img.src = e.target.result;
@@ -982,18 +1098,58 @@
       };
     }
 
-    async function handleOfflineOcrCapture(event) {
+    // 智慧拍瓶身辨識：優先呼叫 Cloudflare Worker Gemini 視覺模型，若未設定則自動使用離線 OCR
+    async function handleSmartBottleCapture(event) {
       const file = event.target.files[0];
       event.target.value = '';
       if (!file) return;
 
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.remove('hidden');
+
+      // 1. 若有設定 Cloudflare Worker，優先使用 Gemini AI 視覺模型辨識包裝
+      if (workerProxyUrl) {
+        statusBox.className = 'rounded-xl p-2.5 text-xs bg-indigo-50 text-indigo-900 border border-indigo-200 flex items-center gap-2';
+        statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full shrink-0"></span> <span>正在透過 Gemini AI 視覺模型解析瓶身品牌、容量與 PAO 效期...</span>`;
+
+        try {
+          const { base64Only } = await prepareImageBase64(file, 1024, false);
+          const res = await fetch(`${workerProxyUrl}/vision`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageBase64: base64Only, mimeType: 'image/jpeg' })
+          });
+
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && json.data) {
+              const ai = json.data;
+              if (ai.category && ['保養品', '化妝品', '日用品'].includes(ai.category)) {
+                document.getElementById('item-category').value = ai.category;
+              }
+              if (ai.brand) document.getElementById('item-brand').value = ai.brand;
+              if (ai.name) document.getElementById('item-name').value = ai.name;
+              if (ai.pao !== undefined && [0, 3, 6, 12, 18, 24].includes(Number(ai.pao))) {
+                document.getElementById('item-pao').value = Number(ai.pao);
+              }
+              if (ai.note) document.getElementById('item-note').value = ai.note;
+
+              statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-900 border border-emerald-200';
+              statusBox.innerHTML = `✨ <strong>Gemini AI 視覺辨識完成！</strong>已自動填入品牌、品名、分類與建議 PAO 效期。`;
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('Gemini Vision proxy fallback to local OCR:', err);
+        }
+      }
+
+      // 2. 備援：離線 Tesseract.js OCR 辨識
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-900 border border-emerald-200 flex items-center gap-2';
       statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full shrink-0"></span> <span id="ocr-progress-text">正在啟動中/日/英離線文字辨識引擎...</span>`;
 
       try {
-        const { dataUrl, imgHeight } = await preprocessImageForOcr(file);
+        const { dataUrl, imgHeight } = await prepareImageBase64(file, 1280, true);
         const result = await Tesseract.recognize(
           dataUrl,
           'chi_tra+jpn+eng',
@@ -1013,22 +1169,16 @@
         const parsed = analyzeOcrStructure(result?.data, imgHeight);
         lastOcrLines = parsed.lines;
 
-        if (parsed.detectedCategory) {
-          document.getElementById('item-category').value = parsed.detectedCategory;
-        }
-        if (parsed.detectedBrand) {
-          document.getElementById('item-brand').value = parsed.detectedBrand;
-        }
-        if (parsed.suggestedName) {
-          document.getElementById('item-name').value = parsed.suggestedName;
-        }
+        if (parsed.detectedCategory) document.getElementById('item-category').value = parsed.detectedCategory;
+        if (parsed.detectedBrand) document.getElementById('item-brand').value = parsed.detectedBrand;
+        if (parsed.suggestedName) document.getElementById('item-name').value = parsed.suggestedName;
 
         if (parsed.lines.length > 0) {
           const chipsHtml = parsed.lines.map((line, idx) => `
             <div class="inline-flex items-center rounded-lg bg-white border border-emerald-300 overflow-hidden text-[11px]">
               <span class="px-2 py-1 text-slate-800 max-w-[155px] truncate">${line}</span>
-              <button type="button" onclick="setOcrToField(${idx}, 'brand')" class="px-1.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border-l border-emerald-200 font-medium" title="設為品牌">品牌</button>
-              <button type="button" onclick="setOcrToField(${idx}, 'name')" class="px-1.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border-l border-emerald-200 font-medium" title="加入品名">+品名</button>
+              <button type="button" onclick="setOcrToField(${idx}, 'brand')" class="px-1.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border-l border-emerald-200 font-medium">品牌</button>
+              <button type="button" onclick="setOcrToField(${idx}, 'name')" class="px-1.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border-l border-emerald-200 font-medium">+品名</button>
             </div>
           `).join('');
 
@@ -1043,7 +1193,7 @@
         }
       } catch (err) {
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-rose-50 text-rose-800 border border-rose-200';
-        statusBox.innerHTML = `❌ 辨識過程發生錯誤，請確認網路暢通（首次使用需載入語言包）後再試一次。`;
+        statusBox.innerHTML = `❌ 辨識過程發生錯誤，請確認網路暢通後再試一次。`;
       }
     }
 
@@ -1058,8 +1208,29 @@
       }
     }
 
-    // 查詢免費開放商品資料庫（OpenBeautyFacts / OpenProductsFacts / UPCitemdb）
+    // 查詢開放資料庫 + Cloudflare Worker 背景自動抓取台日商品
     async function fetchProductFromApis(cleanCode) {
+      // 1. 若有設定 Cloudflare Worker 後端代理，優先全自動抓取日本樂天 / JANCODE
+      if (workerProxyUrl) {
+        try {
+          const wRes = await fetch(`${workerProxyUrl}/barcode?code=${encodeURIComponent(cleanCode)}`);
+          if (wRes.ok) {
+            const wData = await wRes.json();
+            if (wData.found && wData.rawTitle) {
+              const parsed = parseBrandAndNameFromTitle(wData.rawTitle);
+              return {
+                brand: parsed.brand,
+                name: parsed.name,
+                category: parsed.category,
+                imageUrl: wData.imageUrl || '',
+                source: wData.source || '雲端智能代理'
+              };
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 2. 免費開放資料庫
       const openFactsUrls = [
         `https://world.openbeautyfacts.org/api/v2/product/${cleanCode}.json`,
         `https://world.openproductsfacts.org/api/v2/product/${cleanCode}.json`,
@@ -1075,7 +1246,8 @@
             const p = data.product;
             const pName = p.product_name_ja || p.product_name_zh || p.product_name_tw || p.product_name || p.generic_name || '';
             const pBrand = p.brands ? p.brands.split(',')[0].trim() : '';
-            if (pName || pBrand) return { brand: pBrand, name: pName, source: 'OpenBeautyFacts' };
+            const pThumb = p.image_front_small_url || p.image_small_url || '';
+            if (pName || pBrand) return { brand: pBrand, name: pName, imageUrl: pThumb, source: 'OpenBeautyFacts' };
           }
         } catch {}
       }
@@ -1086,8 +1258,9 @@
           const data = await res.json();
           if (data.items && data.items.length > 0) {
             const item = data.items[0];
+            const img = Array.isArray(item.images) && item.images.length ? item.images[0] : '';
             if (item.title || item.brand) {
-              return { brand: item.brand || '', name: item.title || '', source: 'UPCitemdb' };
+              return { brand: item.brand || '', name: item.title || '', imageUrl: img, source: 'UPCitemdb' };
             }
           }
         }
@@ -1104,10 +1277,10 @@
       const statusBox = document.getElementById('barcode-status-box');
       statusBox.classList.remove('hidden');
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-blue-50 text-blue-800 border border-blue-200 flex items-center gap-2';
-      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在搜尋雲端記憶庫與開放商品資料庫 (${cleanCode})...`;
+      statusBox.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full"></span> 正在搜尋記憶庫、群眾條碼池與商品資料庫 (${cleanCode})...`;
 
-      // 第一層：Firebase 雲端與本機共享記憶庫
-      const localMem = customBarcodeDict[cleanCode] || items.find(i => i.barcode === cleanCode);
+      // 1. 本機與家庭雲端記憶庫 + 內建台日常用基礎條碼庫
+      const localMem = customBarcodeDict[cleanCode] || items.find(i => i.barcode === cleanCode) || BUILTIN_COMMON_BARCODES[cleanCode];
       if (localMem) {
         document.getElementById('item-category').value = localMem.category || '保養品';
         document.getElementById('item-brand').value = localMem.brand || '';
@@ -1115,27 +1288,47 @@
         if (localMem.pao) document.getElementById('item-pao').value = localMem.pao;
         if (localMem.unit) document.getElementById('item-unit').value = localMem.unit;
         if (localMem.location) document.getElementById('item-location').value = localMem.location;
+        if (localMem.imageData) setCoverThumbPreview(localMem.imageData);
 
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
-        statusBox.innerHTML = `✅ <strong>已從共享記憶庫帶入：</strong>${localMem.brand ? localMem.brand + ' ' : ''}${localMem.name}`;
+        statusBox.innerHTML = `✅ <strong>已從記憶庫快速帶入：</strong>${localMem.brand ? localMem.brand + ' ' : ''}${localMem.name}`;
         return;
       }
 
-      // 第二層：免費開放商品資料庫
+      // 2. 群眾共享雲端條碼池
+      if (globalBarcodesRef) {
+        try {
+          const snap = await globalBarcodesRef.child(cleanCode).once('value');
+          const gVal = snap.val();
+          if (gVal && gVal.name) {
+            document.getElementById('item-category').value = gVal.category || '保養品';
+            document.getElementById('item-brand').value = gVal.brand || '';
+            document.getElementById('item-name').value = gVal.name || '';
+            if (gVal.pao) document.getElementById('item-pao').value = gVal.pao;
+            if (gVal.unit) document.getElementById('item-unit').value = gVal.unit;
+            statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
+            statusBox.innerHTML = `🌐 <strong>已從全體共享條碼池自動帶入：</strong>${gVal.brand ? gVal.brand + ' ' : ''}${gVal.name}`;
+            return;
+          }
+        } catch {}
+      }
+
+      // 3. Worker 後端代理 & 免費開放商品資料庫
       const found = await fetchProductFromApis(cleanCode);
       if (found && (found.brand || found.name)) {
         if (found.category) document.getElementById('item-category').value = found.category;
         if (found.brand) document.getElementById('item-brand').value = found.brand;
         if (found.name) document.getElementById('item-name').value = found.name;
+        if (found.imageUrl) setCoverThumbPreview(found.imageUrl);
         statusBox.className = 'rounded-xl p-2.5 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
-        statusBox.innerHTML = `✨ <strong>已透過 ${found.source} 自動帶入！</strong>（若品牌與品名有微調需求可點「⇄ 互換」，儲存後即永久同步給全家人）`;
+        statusBox.innerHTML = `✨ <strong>已透過 ${found.source} 自動帶入！</strong>（儲存後將同步寫入共享條碼池）`;
         return;
       }
 
-      // 第三層：免 API Key 一鍵開啟專屬 Google 程式化搜尋引擎＋自動解析剪貼簿（亦可直接拍瓶身辨識）
+      // 4. 備援：免 API Key 一鍵開啟專屬 Google 程式化搜尋引擎＋自動解析剪貼簿
       statusBox.className = 'rounded-xl p-2.5 text-xs bg-amber-50 text-amber-900 border border-amber-200 space-y-2';
       statusBox.innerHTML = `
-        <div>⚠️ 開放資料庫暫無條碼 <strong>${cleanCode}</strong>，可點下方搜尋後複製標題切回自動填入（或直接點上方綠色「拍瓶身辨識」）：</div>
+        <div>⚠️ 資料庫暫無條碼 <strong>${cleanCode}</strong>，可點下方搜尋後複製標題切回自動填入（或直接點上方「AI 拍瓶身」）：</div>
         <div class="flex gap-2">
           <button type="button" onclick="openFreeGoogleSearch('${cleanCode}')" class="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-xs text-center shadow-xs">
             🔍 一鍵搜台日商品標題
@@ -1211,7 +1404,7 @@
         if (locFilter !== 'all' && item.location !== locFilter) return false;
         if (ownerFilter !== 'all' && item.owner !== ownerFilter) return false;
         if (keyword) {
-          const hay = `${item.brand} ${item.name} ${item.barcode}`.toLowerCase();
+          const hay = `${item.brand} ${item.name} ${item.barcode} ${item.note || ''}`.toLowerCase();
           if (!hay.includes(keyword)) return false;
         }
         const eff = getEffectiveExpiry(item);
@@ -1243,6 +1436,10 @@
           }
         }
 
+        const thumbHtml = item.imageData
+          ? `<img src="${item.imageData}" class="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0" alt="${item.name}" />`
+          : '';
+
         return `
           <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex flex-col justify-between space-y-3">
             <div class="space-y-2">
@@ -1251,6 +1448,7 @@
                   <span class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600">${item.category}</span>
                   <span class="px-2 py-0.5 rounded-md text-[11px] bg-slate-50 text-slate-500 border border-slate-200/70">${item.location}</span>
                   <span class="px-2 py-0.5 rounded-md text-[11px] bg-slate-50 text-slate-500 border border-slate-200/70">${item.owner}</span>
+                  ${item.note ? `<span class="px-2 py-0.5 rounded-md text-[11px] bg-indigo-50 text-indigo-700 font-medium">${item.note}</span>` : ''}
                   ${isLow ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-100 text-blue-700">低庫存</span>` : ''}
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
@@ -1259,9 +1457,12 @@
                 </div>
               </div>
 
-              <div>
-                <div class="text-xs text-slate-400 font-medium">${item.brand || '未標示品牌'}</div>
-                <h3 class="text-base font-bold text-slate-900 leading-snug">${item.name}</h3>
+              <div class="flex items-center gap-3">
+                ${thumbHtml}
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs text-slate-400 font-medium truncate">${item.brand || '未標示品牌'}</div>
+                  <h3 class="text-base font-bold text-slate-900 leading-snug line-clamp-2">${item.name}</h3>
+                </div>
               </div>
 
               <div class="flex items-center justify-between pt-1">
@@ -1352,6 +1553,8 @@
       document.getElementById('item-form').reset();
       document.getElementById('item-id').value = '';
       document.getElementById('item-min-qty').value = '';
+      document.getElementById('item-note').value = '';
+      setCoverThumbPreview('');
       document.getElementById('opened-date-wrap').classList.add('hidden');
       pendingExternalSearchBarcode = null;
       const statusBox = document.getElementById('barcode-status-box');
@@ -1359,6 +1562,7 @@
       statusBox.innerHTML = '';
       lastOcrLines = [];
       document.getElementById('modal-title').textContent = id ? '編輯庫存品項' : '新增庫存品項';
+      document.getElementById('vision-btn-text').textContent = workerProxyUrl ? 'Gemini 辨識' : '拍瓶身辨識';
 
       if (id) {
         const item = items.find(i => i.id === id);
@@ -1377,6 +1581,8 @@
           document.getElementById('item-opened-date').value = item.openedDate || '';
           document.getElementById('item-location').value = item.location || '浴室鏡櫃';
           document.getElementById('item-owner').value = item.owner || '自己';
+          document.getElementById('item-note').value = item.note || '';
+          if (item.imageData) setCoverThumbPreview(item.imageData);
           toggleOpenedDateInput();
         }
       }
@@ -1408,7 +1614,9 @@
         opened: document.getElementById('item-opened').checked,
         openedDate: document.getElementById('item-opened').checked ? document.getElementById('item-opened-date').value : '',
         location: document.getElementById('item-location').value,
-        owner: document.getElementById('item-owner').value
+        owner: document.getElementById('item-owner').value,
+        note: document.getElementById('item-note').value.trim(),
+        imageData: document.getElementById('item-image-data').value || ''
       };
 
       if (payload.brand && payload.brand.length >= 2 && !customBrands.some(b => b.toLowerCase() === payload.brand.toLowerCase())) {
@@ -1417,14 +1625,27 @@
       }
 
       if (payload.barcode) {
-        customBarcodeDict[payload.barcode] = {
+        const dictEntry = {
           category: payload.category,
           brand: payload.brand,
           name: payload.name,
           pao: payload.pao,
           unit: payload.unit,
-          location: payload.location
+          location: payload.location,
+          imageData: payload.imageData
         };
+        customBarcodeDict[payload.barcode] = dictEntry;
+
+        if (globalBarcodesRef && /^[a-zA-Z0-9_-]{6,20}$/.test(payload.barcode)) {
+          globalBarcodesRef.child(payload.barcode).set({
+            category: payload.category,
+            brand: payload.brand,
+            name: payload.name,
+            pao: payload.pao,
+            unit: payload.unit,
+            updatedAt: Date.now()
+          }).catch(() => {});
+        }
       }
 
       if (id) {
@@ -1573,6 +1794,9 @@
         try {
           initFirebaseSync(JSON.parse(savedCfg), savedRoom, false);
         } catch {}
+      }
+      if ('Notification' in window && Notification.permission === 'granted') {
+        setTimeout(() => requestAndCheckNotifications(true), 2000);
       }
     })();
 
