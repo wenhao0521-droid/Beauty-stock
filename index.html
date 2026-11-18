@@ -30,7 +30,7 @@
           <h1 class="text-base font-bold text-slate-800 truncate">美妝與日用品庫存管家</h1>
           <div class="flex items-center gap-1.5 text-[11px] text-slate-500">
             <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-            <span id="syncStatusText" class="truncate">正在連線 Firebase 載入舊資料...</span>
+            <span id="syncStatusText" class="truncate">正在連線 Firebase 載入資料...</span>
           </div>
         </div>
       </div>
@@ -245,7 +245,7 @@
     </div>
   </div>
 
-  <!-- 雲端同步與 AI Worker 設定彈窗 -->
+  <!-- 雲端同步與 AI 後端設定彈窗 -->
   <div id="settingsModal" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -257,20 +257,20 @@
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Cloudflare AI Worker 網址（已預設填入）</label>
-          <input type="url" id="settingWorkerUrl" placeholder="https://beauty-stock-api.wenhao0521.workers.dev"
+          <label class="block font-bold text-slate-700 mb-1">Vercel AI 後端 API 網址（美國華盛頓 iad1 節點）</label>
+          <input type="url" id="settingWorkerUrl" placeholder="https://beauty-stock-omega.vercel.app"
             class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Firebase Realtime Database 網址（已預設填入）</label>
+          <label class="block font-bold text-slate-700 mb-1">Firebase Realtime Database 網址</label>
           <input type="url" id="settingFirebaseUrl" placeholder="https://beauty-stock-cf6db-default-rtdb.asia-southeast1.firebasedatabase.app"
             class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">家庭共享空間代碼（自動偵測 beauty_stock_rooms 空間）</label>
-          <input type="text" id="settingSpaceId" placeholder="留空會自動載入 beauty_stock_rooms 內的空間"
+          <label class="block font-bold text-slate-700 mb-1">家庭共享空間代碼（與家人填相同代碼即可同步）</label>
+          <input type="text" id="settingSpaceId" placeholder="Beauty--stock"
             class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
         </div>
       </div>
@@ -283,8 +283,9 @@
   </div>
 
   <script>
-    const DEFAULT_WORKER_URL = 'https://beauty-stock-api.wenhao0521.workers.dev';
+    const DEFAULT_API_URL = 'https://beauty-stock-omega.vercel.app';
     const DEFAULT_FIREBASE_URL = 'https://beauty-stock-cf6db-default-rtdb.asia-southeast1.firebasedatabase.app';
+    const DEFAULT_SPACE_ID = 'Beauty--stock';
     const PRIMARY_STORAGE_KEY = 'beauty_stock_items';
 
     let inventory = [];
@@ -294,7 +295,17 @@
     let html5QrCode = null;
     let activeRoomWriteUrl = '';
 
-    // 合併本機所有可能鍵名
+    // 自動從舊版 Cloudflare 網址無縫升級為新的 Vercel 美國節點網址
+    function getApiBaseUrl() {
+      let saved = (localStorage.getItem('beauty_ai_worker_url') || '').trim().replace(/\/+$/, '');
+      if (!saved || saved.includes('workers.dev')) {
+        saved = DEFAULT_API_URL;
+        localStorage.setItem('beauty_ai_worker_url', DEFAULT_API_URL);
+      }
+      return saved;
+    }
+
+    // 合併本機所有可能鍵名，確保本機快取不遺失
     function loadMergedLocalInventory() {
       const candidateKeys = [
         'beauty_stock_items',
@@ -338,13 +349,12 @@
       const spaceId = (
         localStorage.getItem('beauty_space_id') ||
         localStorage.getItem('beauty_room_id') ||
-        ''
+        DEFAULT_SPACE_ID
       ).trim();
 
       return { dbUrl, spaceId };
     }
 
-    // 從 Firebase 任意節點結構中提取品項陣列（相容 items 子節點或直接存陣列/物件）
     function extractItemsFromNode(node) {
       if (!node || typeof node !== 'object') return [];
       const target = (node.items && typeof node.items === 'object') ? node.items : node;
@@ -358,18 +368,18 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      if (!localStorage.getItem('beauty_ai_worker_url')) {
-        localStorage.setItem('beauty_ai_worker_url', DEFAULT_WORKER_URL);
-      }
+      getApiBaseUrl();
       if (!localStorage.getItem('beauty_firebase_url')) {
         localStorage.setItem('beauty_firebase_url', DEFAULT_FIREBASE_URL);
+      }
+      if (!localStorage.getItem('beauty_space_id')) {
+        localStorage.setItem('beauty_space_id', DEFAULT_SPACE_ID);
       }
       inventory = loadMergedLocalInventory();
       renderItems();
       syncFromFirebase();
     });
 
-    // 自動掃描 beauty_stock_rooms 底下所有舊資料並精準對齊寫入路徑
     async function syncFromFirebase() {
       const { dbUrl, spaceId } = getFirebaseConfig();
       const dot = document.getElementById('syncStatusDot');
@@ -387,22 +397,18 @@
           const roomsData = await roomsRes.json();
           if (roomsData && typeof roomsData === 'object') {
             const roomKeys = Object.keys(roomsData);
-            // 若使用者有指定 spaceId 就找該空間，否則自動選用第一個有資料的空間
-            const chosenRoom = (spaceId && roomsData[spaceId]) ? spaceId : roomKeys[0];
+            const chosenRoom = (spaceId && roomsData[spaceId]) ? spaceId : (roomsData[DEFAULT_SPACE_ID] ? DEFAULT_SPACE_ID : roomKeys[0]);
 
             if (chosenRoom && roomsData[chosenRoom]) {
               const roomNode = roomsData[chosenRoom];
               const remoteItems = extractItemsFromNode(roomNode);
 
-              // 判斷原本是存在 beauty_stock_rooms/{room}/items 還是直接存在 beauty_stock_rooms/{room}
               const hasItemsSubNode = roomNode.items && typeof roomNode.items === 'object';
               activeRoomWriteUrl = hasItemsSubNode
                 ? `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(chosenRoom)}/items`
                 : `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(chosenRoom)}`;
 
-              if (!spaceId) {
-                localStorage.setItem('beauty_space_id', chosenRoom);
-              }
+              localStorage.setItem('beauty_space_id', chosenRoom);
 
               const merged = new Map();
               inventory.forEach(x => merged.set(x.id, x));
@@ -419,8 +425,7 @@
         }
       } catch (e) {}
 
-      // 若 beauty_stock_rooms 尚未建立任何房間，建立預設寫入路徑
-      const fallbackRoom = spaceId || 'default_family';
+      const fallbackRoom = spaceId || DEFAULT_SPACE_ID;
       activeRoomWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(fallbackRoom)}/items`;
       dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
       txt.textContent = `已連線雲端：${fallbackRoom}`;
@@ -429,7 +434,7 @@
     async function pushToFirebase(item) {
       if (!activeRoomWriteUrl) {
         const { dbUrl, spaceId } = getFirebaseConfig();
-        activeRoomWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId || 'default_family')}/items`;
+        activeRoomWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId || DEFAULT_SPACE_ID)}/items`;
       }
       try {
         await fetch(`${activeRoomWriteUrl}/${encodeURIComponent(item.id)}.json`, {
@@ -449,7 +454,7 @@
       } catch (e) {}
     }
 
-    // 核心功能：Gemini AI 拍正面視覺辨識 + 自動壓縮帶入封面縮圖
+    // 核心功能：Gemini AI 拍正面視覺辨識（固定連線美國華盛頓 iad1 節點）+ 自動壓縮帶入封面縮圖
     async function handleSmartBottleCapture(event) {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -465,7 +470,7 @@
           reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-              // 1. 辨識用壓縮圖（長邊 1024px，清晰度高且上傳快速不超時）
+              // 1. 辨識用壓縮圖（長邊 1024px，清晰度高且上傳快速）
               const maxAiSize = 1024;
               let w1 = img.width, h1 = img.height;
               if (w1 > maxAiSize || h1 > maxAiSize) {
@@ -498,11 +503,10 @@
           reader.readAsDataURL(file);
         });
 
-        // 自動將正面照帶入封面縮圖預覽
         setThumbPreview(thumbDataUrl);
 
-        const workerUrl = (localStorage.getItem('beauty_ai_worker_url') || DEFAULT_WORKER_URL).trim().replace(/\/+$/, '');
-        const res = await fetch(`${workerUrl}/vision`, {
+        const apiUrl = getApiBaseUrl();
+        const res = await fetch(`${apiUrl}/vision`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imageBase64: fullBase64, mimeType: 'image/jpeg' })
@@ -610,8 +614,8 @@
       }
 
       try {
-        const workerUrl = (localStorage.getItem('beauty_ai_worker_url') || DEFAULT_WORKER_URL).trim().replace(/\/+$/, '');
-        const res = await fetch(`${workerUrl}/barcode?code=${encodeURIComponent(code)}`);
+        const apiUrl = getApiBaseUrl();
+        const res = await fetch(`${apiUrl}/barcode?code=${encodeURIComponent(code)}`);
         if (res.ok) {
           const data = await res.json();
           if (data.found && data.rawTitle) {
@@ -897,7 +901,7 @@
 
     function openSettingsModal() {
       const { dbUrl, spaceId } = getFirebaseConfig();
-      document.getElementById('settingWorkerUrl').value = localStorage.getItem('beauty_ai_worker_url') || DEFAULT_WORKER_URL;
+      document.getElementById('settingWorkerUrl').value = getApiBaseUrl();
       document.getElementById('settingFirebaseUrl').value = dbUrl;
       document.getElementById('settingSpaceId').value = spaceId;
       document.getElementById('settingsModal').classList.remove('hidden');
@@ -908,9 +912,9 @@
     }
 
     function saveCloudSettings() {
-      const wUrl = document.getElementById('settingWorkerUrl').value.trim() || DEFAULT_WORKER_URL;
+      const wUrl = document.getElementById('settingWorkerUrl').value.trim() || DEFAULT_API_URL;
       const fUrl = document.getElementById('settingFirebaseUrl').value.trim() || DEFAULT_FIREBASE_URL;
-      const sId = document.getElementById('settingSpaceId').value.trim();
+      const sId = document.getElementById('settingSpaceId').value.trim() || DEFAULT_SPACE_ID;
 
       localStorage.setItem('beauty_ai_worker_url', wUrl);
       localStorage.setItem('beauty_firebase_url', fUrl);
