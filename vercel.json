@@ -1,0 +1,8 @@
+{
+  "regions": ["iad1"],
+  "rewrites": [
+    { "source": "/vision", "destination": "/api/vision" },
+    { "source": "/barcode", "destination": "/api/barcode" },
+    { "source": "/test", "destination": "/api/test" }
+  ]
+}
