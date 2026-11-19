@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#e11d48" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>美妝與日用品庫存管家</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -30,7 +36,7 @@
           <h1 class="text-base font-bold text-slate-800 truncate">美妝與日用品庫存管家</h1>
           <div class="flex items-center gap-1.5 text-[11px] text-slate-500">
             <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-            <span id="syncStatusText" class="truncate">正在連線 Firebase 載入資料...</span>
+            <span id="syncStatusText" class="truncate">正在載入專屬雲端空間...</span>
           </div>
         </div>
       </div>
@@ -44,7 +50,7 @@
 
         <button onclick="openSettingsModal()" class="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition">
           <i class="fa-solid fa-cloud text-sky-500"></i>
-          <span class="hidden sm:inline">雲端/AI</span>
+          <span class="hidden sm:inline">雲端空間</span>
         </button>
 
         <button onclick="openItemModal()" class="px-3 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white text-xs font-bold shadow-sm flex items-center gap-1 transition">
@@ -156,13 +162,11 @@
             </label>
           </div>
 
-          <!-- 條碼相機掃描容器 -->
           <div id="scannerContainer" class="hidden rounded-xl overflow-hidden border border-rose-200 bg-black relative">
             <div id="reader" class="w-full"></div>
             <button type="button" onclick="stopBarcodeScanner()" class="w-full py-2 bg-slate-800 text-white text-xs font-bold">關閉相機掃描</button>
           </div>
 
-          <!-- 辨識 / 查詢即時狀態提示框 -->
           <div id="ocrResultBox" class="hidden rounded-xl bg-white/90 border border-indigo-200 p-2.5 text-xs text-slate-700 leading-relaxed">
             <span id="ocrStatusText"></span>
           </div>
@@ -393,34 +397,50 @@
     </div>
   </div>
 
-  <!-- 雲端同步與 AI 後端設定彈窗 -->
+  <!-- 專屬雲端空間與家庭共享設定彈窗（多用戶資料完全隔離） -->
   <div id="settingsModal" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="text-base font-bold text-slate-800">雲端同步與 AI 視覺辨識設定</h3>
+        <h3 class="text-base font-bold text-slate-800">專屬雲端空間 & 家庭共享</h3>
         <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
+      <div class="bg-sky-50 border border-sky-200/80 rounded-2xl p-3 text-[11px] text-sky-900 leading-relaxed space-y-1">
+        <div class="font-bold">🔒 獨立資料保護機制已啟用</div>
+        <div>每支手機皆擁有獨立隨機空間代碼，確保個人庫存互不干擾；若要與家人共享，只需雙方填入相同的自訂空間代碼即可即時同步。</div>
+      </div>
+
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Vercel AI 後端 API 網址（美國華盛頓 iad1 節點）</label>
-          <input type="url" id="settingWorkerUrl" placeholder="https://beauty-stock-omega.vercel.app"
-            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
+          <label class="block font-bold text-slate-700 mb-1">我的專屬雲端空間代碼（家庭共享碼）</label>
+          <div class="flex gap-1.5">
+            <input type="text" id="settingSpaceId" placeholder="輸入或產生專屬空間代碼"
+              class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs font-mono font-bold text-slate-800" />
+            <button type="button" onclick="copySpaceCode()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold shrink-0">複製</button>
+          </div>
+          <div class="mt-1.5 flex items-center justify-between">
+            <button type="button" onclick="generateNewRandomSpace()" class="text-[11px] text-indigo-600 hover:underline font-medium">
+              🎲 產生全新獨立空間代碼
+            </button>
+            <a href="/privacy.html" target="_blank" class="text-[11px] text-slate-400 hover:underline">隱私權政策</a>
+          </div>
         </div>
 
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Firebase Realtime Database 網址</label>
-          <input type="url" id="settingFirebaseUrl" placeholder="https://beauty-stock-cf6db-default-rtdb.asia-southeast1.firebasedatabase.app"
-            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">家庭共享空間代碼（與家人填相同代碼即可同步）</label>
-          <input type="text" id="settingSpaceId" placeholder="Beauty--stock"
-            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
-        </div>
+        <details class="text-[11px] text-slate-500 pt-1">
+          <summary class="cursor-pointer font-medium text-slate-600">進階伺服器連線設定</summary>
+          <div class="space-y-2.5 mt-2 pt-2 border-t border-slate-100">
+            <div>
+              <label class="block font-bold text-slate-600 mb-1">AI 視覺與條碼 API 網址</label>
+              <input type="url" id="settingWorkerUrl" class="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-[11px]" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-600 mb-1">Firebase Realtime Database 網址</label>
+              <input type="url" id="settingFirebaseUrl" class="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-[11px]" />
+            </div>
+          </div>
+        </details>
       </div>
 
       <div class="flex gap-2 pt-2">
@@ -433,7 +453,6 @@
   <script>
     const DEFAULT_API_URL = 'https://beauty-stock-omega.vercel.app';
     const DEFAULT_FIREBASE_URL = 'https://beauty-stock-cf6db-default-rtdb.asia-southeast1.firebasedatabase.app';
-    const DEFAULT_SPACE_ID = 'Beauty--stock';
     const PRIMARY_STORAGE_KEY = 'beauty_stock_items';
     const EMPTIES_STORAGE_KEY = 'beauty_stock_empties';
 
@@ -446,6 +465,37 @@
     let html5QrCode = null;
     let activeRoomWriteUrl = '';
     let activeEmptiesWriteUrl = '';
+
+    // 註冊 PWA Service Worker（Google Play TWA 打包必要條件）
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+
+    // 產生用戶專屬隨機空間代碼（隔離陌生使用者資料）
+    function createUniqueSpaceId() {
+      const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+      let rand = '';
+      for (let i = 0; i < 8; i++) {
+        rand += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return 'space_' + rand;
+    }
+
+    function ensurePersonalSpaceId() {
+      let existing = (
+        localStorage.getItem('beauty_space_id') ||
+        localStorage.getItem('beauty_room_id') ||
+        ''
+      ).trim();
+
+      if (!existing) {
+        existing = createUniqueSpaceId();
+        localStorage.setItem('beauty_space_id', existing);
+      }
+      return existing;
+    }
 
     function getApiBaseUrl() {
       let saved = (localStorage.getItem('beauty_ai_worker_url') || '').trim().replace(/\/+$/, '');
@@ -511,12 +561,7 @@
         DEFAULT_FIREBASE_URL
       ).trim().replace(/\/+$/, '');
 
-      const spaceId = (
-        localStorage.getItem('beauty_space_id') ||
-        localStorage.getItem('beauty_room_id') ||
-        DEFAULT_SPACE_ID
-      ).trim();
-
+      const spaceId = ensurePersonalSpaceId();
       return { dbUrl, spaceId };
     }
 
@@ -537,9 +582,7 @@
       if (!localStorage.getItem('beauty_firebase_url')) {
         localStorage.setItem('beauty_firebase_url', DEFAULT_FIREBASE_URL);
       }
-      if (!localStorage.getItem('beauty_space_id')) {
-        localStorage.setItem('beauty_space_id', DEFAULT_SPACE_ID);
-      }
+      ensurePersonalSpaceId();
       inventory = loadMergedLocalInventory();
       emptiesList = loadLocalEmpties();
       renderLocationTabs();
@@ -548,77 +591,70 @@
       syncFromFirebase();
     });
 
+    // 精準讀取當前使用者專屬空間（不再抓取所有房間列表，確保多用戶隱私隔離）
     async function syncFromFirebase() {
       const { dbUrl, spaceId } = getFirebaseConfig();
       const dot = document.getElementById('syncStatusDot');
       const txt = document.getElementById('syncStatusText');
 
-      if (!dbUrl) {
+      if (!dbUrl || !spaceId) {
         dot.className = 'w-2 h-2 rounded-full bg-amber-400';
         txt.textContent = '本機模式';
         return;
       }
 
       try {
-        const roomsRes = await fetch(`${dbUrl}/beauty_stock_rooms.json`);
-        if (roomsRes.ok) {
-          const roomsData = await roomsRes.json();
-          if (roomsData && typeof roomsData === 'object') {
-            const roomKeys = Object.keys(roomsData);
-            const chosenRoom = (spaceId && roomsData[spaceId]) ? spaceId : (roomsData[DEFAULT_SPACE_ID] ? DEFAULT_SPACE_ID : roomKeys[0]);
+        const roomRes = await fetch(`${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}.json`);
+        if (roomRes.ok) {
+          const roomNode = await roomRes.json();
+          if (roomNode && typeof roomNode === 'object') {
+            const remoteItems = extractItemsFromNode(roomNode);
+            const hasItemsSubNode = roomNode.items && typeof roomNode.items === 'object';
 
-            if (chosenRoom && roomsData[chosenRoom]) {
-              const roomNode = roomsData[chosenRoom];
-              const remoteItems = extractItemsFromNode(roomNode);
+            activeRoomWriteUrl = hasItemsSubNode
+              ? `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}/items`
+              : `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}`;
+            activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}/empties`;
 
-              const hasItemsSubNode = roomNode.items && typeof roomNode.items === 'object';
-              activeRoomWriteUrl = hasItemsSubNode
-                ? `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(chosenRoom)}/items`
-                : `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(chosenRoom)}`;
+            const merged = new Map();
+            inventory.forEach(x => merged.set(x.id, x));
+            remoteItems.forEach(x => merged.set(x.id, x));
+            inventory = Array.from(merged.values());
+            saveLocalInventory();
 
-              activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(chosenRoom)}/empties`;
-              localStorage.setItem('beauty_space_id', chosenRoom);
-
-              const merged = new Map();
-              inventory.forEach(x => merged.set(x.id, x));
-              remoteItems.forEach(x => merged.set(x.id, x));
-              inventory = Array.from(merged.values());
-              saveLocalInventory();
-
-              if (roomNode.empties && typeof roomNode.empties === 'object') {
-                const remoteEmpties = Object.entries(roomNode.empties)
-                  .map(([k, v]) => (v && typeof v === 'object' ? { id: v.id || k, ...v } : null))
-                  .filter(Boolean);
-                const mergedEmpties = new Map();
-                emptiesList.forEach(x => mergedEmpties.set(x.id, x));
-                remoteEmpties.forEach(x => mergedEmpties.set(x.id, x));
-                emptiesList = Array.from(mergedEmpties.values()).sort((a, b) => (b.finishedAt || 0) - (a.finishedAt || 0));
-                saveLocalEmpties();
-              }
-
-              renderLocationTabs();
-              renderItems();
-              updateEmptyAchievementsUI();
-
-              dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-              txt.textContent = `已同步：${chosenRoom}（庫存 ${inventory.length}）`;
-              return;
+            if (roomNode.empties && typeof roomNode.empties === 'object') {
+              const remoteEmpties = Object.entries(roomNode.empties)
+                .map(([k, v]) => (v && typeof v === 'object' ? { id: v.id || k, ...v } : null))
+                .filter(Boolean);
+              const mergedEmpties = new Map();
+              emptiesList.forEach(x => mergedEmpties.set(x.id, x));
+              remoteEmpties.forEach(x => mergedEmpties.set(x.id, x));
+              emptiesList = Array.from(mergedEmpties.values()).sort((a, b) => (b.finishedAt || 0) - (a.finishedAt || 0));
+              saveLocalEmpties();
             }
+
+            renderLocationTabs();
+            renderItems();
+            updateEmptyAchievementsUI();
+
+            dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+            txt.textContent = `專屬空間：${spaceId}（${inventory.length} 筆）`;
+            return;
           }
         }
       } catch (e) {}
 
-      const fallbackRoom = spaceId || DEFAULT_SPACE_ID;
-      activeRoomWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(fallbackRoom)}/items`;
-      activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(fallbackRoom)}/empties`;
+      // 全新空間尚未有任何資料時，初始化寫入路徑
+      activeRoomWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}/items`;
+      activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}/empties`;
       dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-      txt.textContent = `已連線雲端：${fallbackRoom}`;
+      txt.textContent = `專屬空間：${spaceId}`;
     }
 
     async function pushToFirebase(item) {
       if (!activeRoomWriteUrl) {
         const { dbUrl, spaceId } = getFirebaseConfig();
-        activeRoomWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId || DEFAULT_SPACE_ID)}/items`;
+        activeRoomWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}/items`;
       }
       try {
         await fetch(`${activeRoomWriteUrl}/${encodeURIComponent(item.id)}.json`, {
@@ -641,7 +677,7 @@
     async function pushEmptyToFirebase(emptyRecord) {
       if (!activeEmptiesWriteUrl) {
         const { dbUrl, spaceId } = getFirebaseConfig();
-        activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId || DEFAULT_SPACE_ID)}/empties`;
+        activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}/empties`;
       }
       try {
         await fetch(`${activeEmptiesWriteUrl}/${encodeURIComponent(emptyRecord.id)}.json`, {
@@ -858,7 +894,6 @@
     // ==================== 圖片 EXIF 自動轉正與壓縮核心 ====================
 
     async function processPhotoWithAutoOrientation(file) {
-      // 優先使用 createImageBitmap + from-image 強制套用手機相機 EXIF 旋轉方向
       if (typeof createImageBitmap === 'function') {
         try {
           const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
@@ -883,12 +918,9 @@
 
           if (bitmap.close) bitmap.close();
           return { fullBase64: aiDataUrl.split(',')[1], thumbDataUrl: thumbUrl };
-        } catch (err) {
-          // 若舊款瀏覽器不支援 options 參數則自動降級至下方手動 EXIF 轉正流程
-        }
+        } catch (err) {}
       }
 
-      // 降級備援：手動讀取 JPEG EXIF Orientation 並旋轉 Canvas
       const arrayBuf = await file.arrayBuffer();
       const orientation = getJpegExifOrientation(arrayBuf);
       const blobUrl = URL.createObjectURL(file);
@@ -1426,15 +1458,33 @@
       document.getElementById('settingsModal').classList.add('hidden');
     }
 
+    function copySpaceCode() {
+      const code = document.getElementById('settingSpaceId').value.trim();
+      if (!code) return;
+      navigator.clipboard?.writeText(code);
+      alert(`已複製空間代碼：${code}\n傳給家人貼上即可共同管理同一份庫存！`);
+    }
+
+    function generateNewRandomSpace() {
+      if (!confirm('產生新空間代碼後，畫面會切換至全新空白雲端空間（原空間資料仍保留在雲端）。確定產生嗎？')) return;
+      document.getElementById('settingSpaceId').value = createUniqueSpaceId();
+    }
+
     function saveCloudSettings() {
       const wUrl = document.getElementById('settingWorkerUrl').value.trim() || DEFAULT_API_URL;
       const fUrl = document.getElementById('settingFirebaseUrl').value.trim() || DEFAULT_FIREBASE_URL;
-      const sId = document.getElementById('settingSpaceId').value.trim() || DEFAULT_SPACE_ID;
+      const sId = document.getElementById('settingSpaceId').value.trim() || createUniqueSpaceId();
 
       localStorage.setItem('beauty_ai_worker_url', wUrl);
       localStorage.setItem('beauty_firebase_url', fUrl);
       localStorage.setItem('beauty_fb_url', fUrl);
       localStorage.setItem('beauty_space_id', sId);
+
+      // 切換不同空間時清空記憶體舊清單再載入新空間資料
+      inventory = [];
+      emptiesList = [];
+      saveLocalInventory();
+      saveLocalEmpties();
 
       closeSettingsModal();
       syncFromFirebase();
