@@ -583,6 +583,7 @@
       setThumbPreview('');
     }
 
+    // 多層條碼查詢：本機記憶庫 -> Firebase 群眾共享池 -> Vercel 外部多庫 + Gemini AI 結構化清洗
     async function lookupBarcodeInfo() {
       const code = document.getElementById('itemBarcode').value.trim();
       if (!code) return;
@@ -592,11 +593,13 @@
       statusBox.classList.remove('hidden');
       statusText.innerHTML = `🔍 正在查詢條碼 <b>${code}</b>...`;
 
+      // 1. 優先查詢本機記憶庫
       if (localBarcodeMemory[code]) {
         applyBarcodeRecord(localBarcodeMemory[code], '本機記憶庫');
         return;
       }
 
+      // 2. 查詢 Firebase 群眾共享條碼庫
       const { dbUrl } = getFirebaseConfig();
       if (dbUrl) {
         try {
@@ -613,14 +616,43 @@
         } catch (e) {}
       }
 
+      // 3. 查詢 Vercel 多層外部條碼資料庫（樂天 / JANCODE / Open Beauty Facts）並由 AI 自動清洗結構化
       try {
         const apiUrl = getApiBaseUrl();
         const res = await fetch(`${apiUrl}/barcode?code=${encodeURIComponent(code)}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.found && data.rawTitle) {
-            document.getElementById('itemName').value = data.rawTitle;
-            statusText.innerHTML = `✅ 已從 <b>${data.source}</b> 帶入商品名稱！`;
+          if (data.found) {
+            const st = data.structured || { name: data.rawTitle, category: '保養品', pao: 12 };
+            if (st.brand) document.getElementById('itemBrand').value = st.brand;
+            if (st.name) document.getElementById('itemName').value = st.name;
+            if (st.category) {
+              const catSelect = document.getElementById('itemCategory');
+              if ([...catSelect.options].some(o => o.value === st.category)) {
+                catSelect.value = st.category;
+              }
+            }
+            if (st.pao !== undefined) document.getElementById('itemPao').value = String(st.pao);
+
+            // 自動快取至本機與 Firebase 群眾共享池，下次任何人掃同一支條碼 0 秒秒填
+            const meta = {
+              brand: st.brand || '',
+              name: st.name || data.rawTitle,
+              category: st.category || '保養品',
+              pao: st.pao ?? 12,
+              updatedAt: Date.now()
+            };
+            localBarcodeMemory[code] = meta;
+            localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
+            if (dbUrl) {
+              fetch(`${dbUrl}/global_beauty_barcodes/${encodeURIComponent(code)}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(meta)
+              }).catch(() => {});
+            }
+
+            statusText.innerHTML = `✨ 已從 <b>${data.source}</b> 查詢並由 AI 自動整理完成！`;
             return;
           }
         }
