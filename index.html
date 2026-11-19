@@ -36,7 +36,6 @@
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
-        <!-- 空瓶成就按鈕 -->
         <button onclick="openEmptiesModal()" class="px-2.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-800 text-xs font-bold flex items-center gap-1 transition">
           <i class="fa-solid fa-trophy text-amber-500"></i>
           <span>空瓶</span>
@@ -110,7 +109,6 @@
           class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-rose-400" />
       </div>
 
-      <!-- 商品分類標籤 -->
       <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
         <button onclick="setCategory('全部')" data-cat="全部" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-bold bg-rose-500 text-white shrink-0">全部</button>
         <button onclick="setCategory('保養品')" data-cat="保養品" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">保養品</button>
@@ -118,7 +116,6 @@
         <button onclick="setCategory('日用品')" data-cat="日用品" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">日用品</button>
       </div>
 
-      <!-- 📍 存放位置快速篩選列 -->
       <div id="locationFilterBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1"></div>
     </section>
 
@@ -143,7 +140,7 @@
         <div class="bg-gradient-to-br from-rose-50 via-pink-50 to-indigo-50 border border-rose-100 rounded-2xl p-3.5 space-y-3">
           <div>
             <div class="text-xs font-bold text-slate-800">智慧條碼查詢 & AI 視覺辨識</div>
-            <div class="text-[11px] text-slate-500">直接拍商品正面即可自動建檔並帶入封面縮圖</div>
+            <div class="text-[11px] text-slate-500">直接拍商品正面即可自動轉正建檔並帶入封面縮圖</div>
           </div>
 
           <div class="flex flex-wrap gap-2">
@@ -178,8 +175,8 @@
             <img id="itemPhotoPreview" src="" alt="封面縮圖" class="w-full h-full object-cover hidden" />
           </div>
           <div class="flex-1 min-w-0 space-y-1.5">
-            <div class="text-xs font-bold text-slate-700">商品封面縮圖（自動帶入 / 選填）</div>
-            <div class="text-[11px] text-slate-500">使用 Gemini 辨識拍正面時會自動帶入</div>
+            <div class="text-xs font-bold text-slate-700">商品封面縮圖（自動轉正帶入 / 選填）</div>
+            <div class="text-[11px] text-slate-500">使用 Gemini 辨識拍正面時會自動修正方向並帶入</div>
             <div class="flex items-center gap-2">
               <label class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-[11px] font-medium text-slate-700 cursor-pointer hover:bg-slate-100">
                 <i class="fa-solid fa-camera mr-1"></i>重拍縮圖
@@ -225,7 +222,7 @@
           </div>
         </div>
 
-        <!-- 📍 存放位置選擇（支援一鍵點選常用位置或自訂輸入） -->
+        <!-- 📍 存放位置選擇 -->
         <div class="bg-sky-50/70 border border-sky-100 rounded-2xl p-3 space-y-2">
           <div class="flex items-center justify-between">
             <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
@@ -377,7 +374,6 @@
         </button>
       </div>
 
-      <!-- 成就數據總覽 -->
       <div class="grid grid-cols-3 gap-2 p-4 bg-amber-50/60 border-b border-amber-100 shrink-0 text-center">
         <div class="bg-white rounded-2xl p-2.5 border border-amber-100">
           <div class="text-lg font-extrabold text-amber-600" id="modalTotalEmpties">0</div>
@@ -393,7 +389,6 @@
         </div>
       </div>
 
-      <!-- 空瓶清單 -->
       <div id="emptiesListContainer" class="p-4 space-y-2.5 overflow-y-auto flex-1"></div>
     </div>
   </div>
@@ -860,7 +855,124 @@
       if (rec.photo) setThumbPreview(rec.photo);
     }
 
-    // ==================== AI 視覺辨識與多層條碼查詢 ====================
+    // ==================== 圖片 EXIF 自動轉正與壓縮核心 ====================
+
+    async function processPhotoWithAutoOrientation(file) {
+      // 優先使用 createImageBitmap + from-image 強制套用手機相機 EXIF 旋轉方向
+      if (typeof createImageBitmap === 'function') {
+        try {
+          const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+          const maxAiSize = 1024;
+          let w1 = bitmap.width, h1 = bitmap.height;
+          if (w1 > maxAiSize || h1 > maxAiSize) {
+            if (w1 > h1) { h1 = Math.round(h1 * maxAiSize / w1); w1 = maxAiSize; }
+            else { w1 = Math.round(w1 * maxAiSize / h1); h1 = maxAiSize; }
+          }
+          const c1 = document.createElement('canvas');
+          c1.width = w1; c1.height = h1;
+          c1.getContext('2d').drawImage(bitmap, 0, 0, w1, h1);
+          const aiDataUrl = c1.toDataURL('image/jpeg', 0.82);
+
+          const maxThumb = 320;
+          let w2 = bitmap.width, h2 = bitmap.height;
+          if (w2 > maxThumb) { h2 = Math.round(h2 * maxThumb / w2); w2 = maxThumb; }
+          const c2 = document.createElement('canvas');
+          c2.width = w2; c2.height = h2;
+          c2.getContext('2d').drawImage(bitmap, 0, 0, w2, h2);
+          const thumbUrl = c2.toDataURL('image/jpeg', 0.65);
+
+          if (bitmap.close) bitmap.close();
+          return { fullBase64: aiDataUrl.split(',')[1], thumbDataUrl: thumbUrl };
+        } catch (err) {
+          // 若舊款瀏覽器不支援 options 參數則自動降級至下方手動 EXIF 轉正流程
+        }
+      }
+
+      // 降級備援：手動讀取 JPEG EXIF Orientation 並旋轉 Canvas
+      const arrayBuf = await file.arrayBuffer();
+      const orientation = getJpegExifOrientation(arrayBuf);
+      const blobUrl = URL.createObjectURL(file);
+
+      try {
+        const img = await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error('圖片載入失敗'));
+          image.src = blobUrl;
+        });
+
+        const drawRotated = (maxSide, quality) => {
+          const swap = orientation >= 5 && orientation <= 8;
+          let srcW = img.width, srcH = img.height;
+          let targetW = swap ? srcH : srcW;
+          let targetH = swap ? srcW : srcH;
+
+          if (targetW > maxSide || targetH > maxSide) {
+            if (targetW > targetH) {
+              targetH = Math.round(targetH * maxSide / targetW);
+              targetW = maxSide;
+            } else {
+              targetW = Math.round(targetW * maxSide / targetH);
+              targetH = maxSide;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+
+          switch (orientation) {
+            case 2: ctx.transform(-1, 0, 0, 1, targetW, 0); break;
+            case 3: ctx.transform(-1, 0, 0, -1, targetW, targetH); break;
+            case 4: ctx.transform(1, 0, 0, -1, 0, targetH); break;
+            case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+            case 6: ctx.transform(0, 1, -1, 0, targetW, 0); break;
+            case 7: ctx.transform(0, -1, -1, 0, targetW, targetH); break;
+            case 8: ctx.transform(0, -1, 1, 0, 0, targetH); break;
+            default: break;
+          }
+
+          const drawW = swap ? targetH : targetW;
+          const drawH = swap ? targetW : targetH;
+          ctx.drawImage(img, 0, 0, drawW, drawH);
+          return canvas.toDataURL('image/jpeg', quality);
+        };
+
+        const aiDataUrl = drawRotated(1024, 0.82);
+        const thumbUrl = drawRotated(320, 0.65);
+        return { fullBase64: aiDataUrl.split(',')[1], thumbDataUrl: thumbUrl };
+      } finally {
+        URL.revokeObjectURL(blobUrl);
+      }
+    }
+
+    function getJpegExifOrientation(buffer) {
+      const view = new DataView(buffer);
+      if (view.byteLength < 4 || view.getUint16(0, false) !== 0xFFD8) return 1;
+      let offset = 2;
+      while (offset < view.byteLength - 4) {
+        const marker = view.getUint16(offset, false);
+        offset += 2;
+        if (marker === 0xFFE1) {
+          if (view.getUint32(offset + 2, false) !== 0x45786966) return 1;
+          const little = view.getUint16(offset + 8, false) === 0x4949;
+          const ifdOffset = view.getUint32(offset + 12, little);
+          const tags = view.getUint16(offset + 8 + ifdOffset, little);
+          for (let i = 0; i < tags; i++) {
+            const entry = offset + 10 + ifdOffset + i * 12;
+            if (entry + 10 <= view.byteLength && view.getUint16(entry, little) === 0x0112) {
+              return view.getUint16(entry + 8, little);
+            }
+          }
+        } else if ((marker & 0xFF00) !== 0xFF00) {
+          break;
+        } else {
+          offset += view.getUint16(offset, false);
+        }
+      }
+      return 1;
+    }
 
     async function handleSmartBottleCapture(event) {
       const file = event.target.files?.[0];
@@ -869,45 +981,10 @@
       const statusBox = document.getElementById('ocrResultBox');
       const statusText = document.getElementById('ocrStatusText');
       statusBox.classList.remove('hidden');
-      statusText.innerHTML = '⏳ 正在壓縮照片並呼叫 Gemini AI 視覺辨識...';
+      statusText.innerHTML = '⏳ 正在自動轉正方向並呼叫 Gemini AI 視覺辨識...';
 
       try {
-        const { fullBase64, thumbDataUrl } = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-              const maxAiSize = 1024;
-              let w1 = img.width, h1 = img.height;
-              if (w1 > maxAiSize || h1 > maxAiSize) {
-                if (w1 > h1) { h1 = Math.round(h1 * maxAiSize / w1); w1 = maxAiSize; }
-                else { w1 = Math.round(w1 * maxAiSize / h1); h1 = maxAiSize; }
-              }
-              const c1 = document.createElement('canvas');
-              c1.width = w1; c1.height = h1;
-              c1.getContext('2d').drawImage(img, 0, 0, w1, h1);
-              const aiDataUrl = c1.toDataURL('image/jpeg', 0.8);
-
-              const maxThumb = 320;
-              let w2 = img.width, h2 = img.height;
-              if (w2 > maxThumb) { h2 = Math.round(h2 * maxThumb / w2); w2 = maxThumb; }
-              const c2 = document.createElement('canvas');
-              c2.width = w2; c2.height = h2;
-              c2.getContext('2d').drawImage(img, 0, 0, w2, h2);
-              const thumbUrl = c2.toDataURL('image/jpeg', 0.65);
-
-              resolve({
-                fullBase64: aiDataUrl.split(',')[1],
-                thumbDataUrl: thumbUrl
-              });
-            };
-            img.onerror = () => reject(new Error('圖片格式讀取失敗'));
-            img.src = e.target.result;
-          };
-          reader.onerror = () => reject(new Error('檔案讀取失敗'));
-          reader.readAsDataURL(file);
-        });
-
+        const { fullBase64, thumbDataUrl } = await processPhotoWithAutoOrientation(file);
         setThumbPreview(thumbDataUrl);
 
         const apiUrl = getApiBaseUrl();
@@ -938,7 +1015,7 @@
           document.getElementById('itemNote').value = item.note;
         }
 
-        statusText.innerHTML = `✨ <b class="text-emerald-700">Gemini AI 視覺辨識完成！</b>（已自動帶入正面封面縮圖）`;
+        statusText.innerHTML = `✨ <b class="text-emerald-700">Gemini AI 視覺辨識完成！</b>（已自動修正角度並帶入封面縮圖）`;
       } catch (err) {
         statusText.innerHTML = `⚠️ <b class="text-rose-600">Gemini 辨識失敗：</b>${err.message}`;
       } finally {
@@ -946,24 +1023,13 @@
       }
     }
 
-    function handleManualThumbCapture(event) {
+    async function handleManualThumbCapture(event) {
       const file = event.target.files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const maxThumb = 320;
-          let w = img.width, h = img.height;
-          if (w > maxThumb) { h = Math.round(h * maxThumb / w); w = maxThumb; }
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          setThumbPreview(canvas.toDataURL('image/jpeg', 0.65));
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+      try {
+        const { thumbDataUrl } = await processPhotoWithAutoOrientation(file);
+        setThumbPreview(thumbDataUrl);
+      } catch (e) {}
       event.target.value = '';
     }
 
