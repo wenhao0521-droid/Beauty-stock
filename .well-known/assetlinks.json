@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.wenhao0521.beautystock",
+      "sha256_cert_fingerprints": [
+        "38:7C:38:FF:64:3C:43:43:F2:47:3C:53:26:AA:2A:28:34:CE:6B:DC:B5:64:F3:3A:BB:48:91:37:0F:8C:3F:5A"
+      ]
+    }
+  }
+]
