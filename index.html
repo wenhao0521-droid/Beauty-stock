@@ -36,10 +36,18 @@
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
+        <!-- 空瓶成就按鈕 -->
+        <button onclick="openEmptiesModal()" class="px-2.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-800 text-xs font-bold flex items-center gap-1 transition">
+          <i class="fa-solid fa-trophy text-amber-500"></i>
+          <span>空瓶</span>
+          <span id="headerEmptyCount" class="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px]">0</span>
+        </button>
+
         <button onclick="openSettingsModal()" class="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition">
           <i class="fa-solid fa-cloud text-sky-500"></i>
-          <span>雲端/AI</span>
+          <span class="hidden sm:inline">雲端/AI</span>
         </button>
+
         <button onclick="openItemModal()" class="px-3 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white text-xs font-bold shadow-sm flex items-center gap-1 transition">
           <i class="fa-solid fa-plus"></i>
           <span>新增</span>
@@ -50,6 +58,29 @@
 
   <!-- 主內容區 -->
   <main class="max-w-2xl mx-auto px-4 pt-4 space-y-4">
+
+    <!-- 空瓶成就進度橫幅卡片 -->
+    <section onclick="openEmptiesModal()" class="cursor-pointer bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border border-amber-200/80 rounded-2xl p-3.5 shadow-xs flex items-center justify-between gap-3 hover:border-amber-300 transition">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+          🏆
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-extrabold text-amber-900" id="rankBadgeTitle">🌱 美妝新手</span>
+            <span class="text-[11px] text-amber-700 font-medium">· 累積空瓶 <b id="bannerEmptyTotal">0</b> 瓶</span>
+          </div>
+          <div class="w-44 sm:w-56 h-1.5 bg-amber-200/70 rounded-full overflow-hidden mt-1.5">
+            <div id="rankProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-rose-500 rounded-full transition-all duration-500" style="width: 10%"></div>
+          </div>
+          <div class="text-[10px] text-amber-700/80 mt-1 truncate" id="rankNextHint">再完食 3 瓶即可解鎖「✨ 空瓶達人」稱號！</div>
+        </div>
+      </div>
+      <div class="text-xs font-bold text-amber-700 shrink-0 flex items-center gap-1">
+        <span>成就牆</span>
+        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+      </div>
+    </section>
 
     <!-- 統計摘要卡片 -->
     <section class="grid grid-cols-4 gap-2">
@@ -71,20 +102,24 @@
       </button>
     </section>
 
-    <!-- 搜尋與分類篩選 -->
-    <section class="space-y-2.5">
+    <!-- 搜尋、分類與存放位置篩選 -->
+    <section class="space-y-2">
       <div class="relative">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-        <input type="text" id="searchInput" oninput="renderItems()" placeholder="搜尋品牌、品名、色號或條碼..."
+        <input type="text" id="searchInput" oninput="renderItems()" placeholder="搜尋品牌、品名、存放位置、色號或條碼..."
           class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-rose-400" />
       </div>
 
-      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+      <!-- 商品分類標籤 -->
+      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
         <button onclick="setCategory('全部')" data-cat="全部" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-bold bg-rose-500 text-white shrink-0">全部</button>
         <button onclick="setCategory('保養品')" data-cat="保養品" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">保養品</button>
         <button onclick="setCategory('化妝品')" data-cat="化妝品" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">化妝品</button>
         <button onclick="setCategory('日用品')" data-cat="日用品" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">日用品</button>
       </div>
+
+      <!-- 📍 存放位置快速篩選列 -->
+      <div id="locationFilterBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1"></div>
     </section>
 
     <!-- 庫存清單列表 -->
@@ -136,7 +171,7 @@
           </div>
         </div>
 
-        <!-- 商品封面縮圖（自動帶入或手動補拍） -->
+        <!-- 商品封面縮圖 -->
         <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 flex items-center gap-3">
           <div class="w-16 h-16 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative">
             <i id="photoPlaceholderIcon" class="fa-regular fa-image text-slate-300 text-xl"></i>
@@ -190,6 +225,27 @@
           </div>
         </div>
 
+        <!-- 📍 存放位置選擇（支援一鍵點選常用位置或自訂輸入） -->
+        <div class="bg-sky-50/70 border border-sky-100 rounded-2xl p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
+              <i class="fa-solid fa-location-dot text-sky-500"></i>
+              <span>存放位置</span>
+            </label>
+            <span class="text-[10px] text-slate-400">點選快速填入或直接輸入自訂位置</span>
+          </div>
+          <input type="text" id="itemLocation" placeholder="例：化妝台、浴室櫃、囤貨箱..."
+            class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-sky-400" />
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="selectPresetLocation('化妝台')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">💄 化妝台</button>
+            <button type="button" onclick="selectPresetLocation('浴室櫃')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">🚿 浴室櫃</button>
+            <button type="button" onclick="selectPresetLocation('囤貨箱')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">📦 囤貨箱</button>
+            <button type="button" onclick="selectPresetLocation('冰箱冷藏')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">❄️ 冰箱冷藏</button>
+            <button type="button" onclick="selectPresetLocation('隨身化妝包')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">👜 隨身化妝包</button>
+            <button type="button" onclick="selectPresetLocation('床頭櫃')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">🛏️ 床頭櫃</button>
+          </div>
+        </div>
+
         <!-- 數量、安全庫存、單位 -->
         <div class="grid grid-cols-3 gap-2.5">
           <div>
@@ -225,15 +281,15 @@
           </div>
         </div>
 
-        <!-- 開封狀態與備註 -->
+        <!-- 開封狀態與色號備註 -->
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">開封日期（已開封再填）</label>
             <input type="date" id="itemOpenDate" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">色號 / 存放位置備註</label>
-            <input type="text" id="itemNote" placeholder="例：#02 乾燥玫瑰 / 浴室櫃" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
+            <label class="block text-xs font-bold text-slate-700 mb-1">色號 / 規格備註</label>
+            <input type="text" id="itemNote" placeholder="例：#02 乾燥玫瑰 / 補充包" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
         </div>
 
@@ -242,6 +298,103 @@
           <button type="submit" class="flex-2 w-2/3 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-bold shadow-md">儲存品項</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- 完食空瓶紀錄與評價彈窗 -->
+  <div id="finishBottleModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🎉</span>
+          <h3 class="text-base font-bold text-slate-800">恭喜完食空瓶！記錄空瓶成就</h3>
+        </div>
+        <button onclick="closeFinishModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="finishItemId" />
+      <div class="bg-amber-50/70 border border-amber-200/70 rounded-2xl p-3 flex items-center gap-3">
+        <img id="finishItemThumb" src="" class="w-12 h-12 rounded-xl object-cover bg-white border border-amber-100 hidden" />
+        <div class="min-w-0">
+          <div id="finishItemBrand" class="text-[11px] font-bold text-rose-600 truncate"></div>
+          <div id="finishItemName" class="text-sm font-bold text-slate-800 truncate"></div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-700">空瓶回購評價 *</label>
+        <div class="grid grid-cols-3 gap-2">
+          <label class="cursor-pointer">
+            <input type="radio" name="repurchaseRating" value="💖 必回購" checked class="peer hidden" />
+            <div class="py-2 px-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-600 peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-700 transition">
+              💖 必回購
+            </div>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="repurchaseRating" value="👍 還不錯" class="peer hidden" />
+            <div class="py-2 px-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-600 peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-700 transition">
+              👍 還不錯
+            </div>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="repurchaseRating" value="🙅 不回購" class="peer hidden" />
+            <div class="py-2 px-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-600 peer-checked:bg-slate-100 peer-checked:border-slate-500 peer-checked:text-slate-800 transition">
+              🙅 不回購
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">空瓶記心得（選填）</label>
+        <input type="text" id="finishReviewNote" placeholder="例：保濕度超棒、已回購第三瓶！"
+          class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeFinishModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">取消</button>
+        <button onclick="confirmFinishBottle()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold shadow-sm">
+          🏆 收錄空瓶成就 (+1)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🏆 空瓶成就牆彈窗 -->
+  <div id="emptiesModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden flex items-end sm:items-center justify-center">
+    <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-5 py-4 text-white flex items-center justify-between shrink-0">
+        <div>
+          <h2 class="text-base font-extrabold flex items-center gap-1.5">
+            <span>🏆 空瓶成就牆（空瓶記）</span>
+          </h2>
+          <p class="text-[11px] text-amber-100 mt-0.5">見證每一瓶物盡其用的保養與美妝戰績</p>
+        </div>
+        <button onclick="closeEmptiesModal()" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- 成就數據總覽 -->
+      <div class="grid grid-cols-3 gap-2 p-4 bg-amber-50/60 border-b border-amber-100 shrink-0 text-center">
+        <div class="bg-white rounded-2xl p-2.5 border border-amber-100">
+          <div class="text-lg font-extrabold text-amber-600" id="modalTotalEmpties">0</div>
+          <div class="text-[11px] text-slate-500">累積空瓶數</div>
+        </div>
+        <div class="bg-white rounded-2xl p-2.5 border border-rose-100">
+          <div class="text-lg font-extrabold text-rose-600" id="modalMustBuyCount">0</div>
+          <div class="text-[11px] text-slate-500">💖 必回購神品</div>
+        </div>
+        <div class="bg-white rounded-2xl p-2.5 border border-indigo-100">
+          <div class="text-xs font-extrabold text-indigo-700 pt-1.5" id="modalRankLabel">美妝新手</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">目前成就稱號</div>
+        </div>
+      </div>
+
+      <!-- 空瓶清單 -->
+      <div id="emptiesListContainer" class="p-4 space-y-2.5 overflow-y-auto flex-1"></div>
     </div>
   </div>
 
@@ -287,15 +440,18 @@
     const DEFAULT_FIREBASE_URL = 'https://beauty-stock-cf6db-default-rtdb.asia-southeast1.firebasedatabase.app';
     const DEFAULT_SPACE_ID = 'Beauty--stock';
     const PRIMARY_STORAGE_KEY = 'beauty_stock_items';
+    const EMPTIES_STORAGE_KEY = 'beauty_stock_empties';
 
     let inventory = [];
+    let emptiesList = [];
     let localBarcodeMemory = JSON.parse(localStorage.getItem('beauty_barcode_memory') || localStorage.getItem('barcode_cache') || '{}');
     let currentCategory = '全部';
+    let currentLocationFilter = '全部位置';
     let currentFilter = 'all';
     let html5QrCode = null;
     let activeRoomWriteUrl = '';
+    let activeEmptiesWriteUrl = '';
 
-    // 自動從舊版 Cloudflare 網址無縫升級為新的 Vercel 美國節點網址
     function getApiBaseUrl() {
       let saved = (localStorage.getItem('beauty_ai_worker_url') || '').trim().replace(/\/+$/, '');
       if (!saved || saved.includes('workers.dev')) {
@@ -305,7 +461,6 @@
       return saved;
     }
 
-    // 合併本機所有可能鍵名，確保本機快取不遺失
     function loadMergedLocalInventory() {
       const candidateKeys = [
         'beauty_stock_items',
@@ -335,8 +490,23 @@
       return Array.from(map.values());
     }
 
+    function loadLocalEmpties() {
+      try {
+        const raw = localStorage.getItem(EMPTIES_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : Object.values(parsed || {});
+      } catch (e) {
+        return [];
+      }
+    }
+
     function saveLocalInventory() {
       localStorage.setItem(PRIMARY_STORAGE_KEY, JSON.stringify(inventory));
+    }
+
+    function saveLocalEmpties() {
+      localStorage.setItem(EMPTIES_STORAGE_KEY, JSON.stringify(emptiesList));
     }
 
     function getFirebaseConfig() {
@@ -360,7 +530,7 @@
       const target = (node.items && typeof node.items === 'object') ? node.items : node;
       return Object.entries(target)
         .map(([k, v]) => {
-          if (!v || typeof v !== 'object') return null;
+          if (!v || typeof v !== 'object' || k === 'empties') return null;
           if (!v.name && !v.brand) return null;
           return { id: v.id || k, ...v };
         })
@@ -376,7 +546,10 @@
         localStorage.setItem('beauty_space_id', DEFAULT_SPACE_ID);
       }
       inventory = loadMergedLocalInventory();
+      emptiesList = loadLocalEmpties();
+      renderLocationTabs();
       renderItems();
+      updateEmptyAchievementsUI();
       syncFromFirebase();
     });
 
@@ -408,6 +581,7 @@
                 ? `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(chosenRoom)}/items`
                 : `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(chosenRoom)}`;
 
+              activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(chosenRoom)}/empties`;
               localStorage.setItem('beauty_space_id', chosenRoom);
 
               const merged = new Map();
@@ -415,10 +589,24 @@
               remoteItems.forEach(x => merged.set(x.id, x));
               inventory = Array.from(merged.values());
               saveLocalInventory();
+
+              if (roomNode.empties && typeof roomNode.empties === 'object') {
+                const remoteEmpties = Object.entries(roomNode.empties)
+                  .map(([k, v]) => (v && typeof v === 'object' ? { id: v.id || k, ...v } : null))
+                  .filter(Boolean);
+                const mergedEmpties = new Map();
+                emptiesList.forEach(x => mergedEmpties.set(x.id, x));
+                remoteEmpties.forEach(x => mergedEmpties.set(x.id, x));
+                emptiesList = Array.from(mergedEmpties.values()).sort((a, b) => (b.finishedAt || 0) - (a.finishedAt || 0));
+                saveLocalEmpties();
+              }
+
+              renderLocationTabs();
               renderItems();
+              updateEmptyAchievementsUI();
 
               dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-              txt.textContent = `已同步：${chosenRoom}（共 ${inventory.length} 筆）`;
+              txt.textContent = `已同步：${chosenRoom}（庫存 ${inventory.length}）`;
               return;
             }
           }
@@ -427,6 +615,7 @@
 
       const fallbackRoom = spaceId || DEFAULT_SPACE_ID;
       activeRoomWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(fallbackRoom)}/items`;
+      activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(fallbackRoom)}/empties`;
       dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
       txt.textContent = `已連線雲端：${fallbackRoom}`;
     }
@@ -454,7 +643,225 @@
       } catch (e) {}
     }
 
-    // 核心功能：Gemini AI 拍正面視覺辨識（固定連線美國華盛頓 iad1 節點）+ 自動壓縮帶入封面縮圖
+    async function pushEmptyToFirebase(emptyRecord) {
+      if (!activeEmptiesWriteUrl) {
+        const { dbUrl, spaceId } = getFirebaseConfig();
+        activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId || DEFAULT_SPACE_ID)}/empties`;
+      }
+      try {
+        await fetch(`${activeEmptiesWriteUrl}/${encodeURIComponent(emptyRecord.id)}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(emptyRecord)
+        });
+      } catch (e) {}
+    }
+
+    // ==================== 存放位置選擇與快速篩選 ====================
+
+    function selectPresetLocation(locName) {
+      document.getElementById('itemLocation').value = locName;
+    }
+
+    function setLocationFilter(loc) {
+      currentLocationFilter = loc;
+      renderLocationTabs();
+      renderItems();
+    }
+
+    function renderLocationTabs() {
+      const bar = document.getElementById('locationFilterBar');
+      const locations = Array.from(new Set(
+        inventory.map(it => (it.location || '').trim()).filter(Boolean)
+      ));
+
+      if (locations.length === 0) {
+        bar.innerHTML = '';
+        currentLocationFilter = '全部位置';
+        return;
+      }
+
+      if (currentLocationFilter !== '全部位置' && !locations.includes(currentLocationFilter)) {
+        currentLocationFilter = '全部位置';
+      }
+
+      const tabs = ['全部位置', ...locations];
+      bar.innerHTML = tabs.map(loc => {
+        const active = loc === currentLocationFilter;
+        return `
+          <button onclick="setLocationFilter('${loc.replace(/'/g, "\\'")}')"
+            class="px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
+              active
+                ? 'bg-sky-600 text-white shadow-2xs'
+                : 'bg-sky-50 text-sky-700 border border-sky-200/80 hover:bg-sky-100'
+            }">
+            <i class="fa-solid fa-location-dot text-[10px]"></i>
+            <span>${loc}</span>
+          </button>`;
+      }).join('');
+    }
+
+    // ==================== 空瓶成就系統邏輯 ====================
+
+    function getRankInfo(count) {
+      if (count >= 50) return { title: '💎 終極空瓶傳說', next: null, base: 50, target: 50 };
+      if (count >= 25) return { title: '👑 鐵皮王者', next: '💎 終極空瓶傳說', base: 25, target: 50 };
+      if (count >= 10) return { title: '🔥 保養資深玩家', next: '👑 鐵皮王者', base: 10, target: 25 };
+      if (count >= 3)  return { title: '✨ 空瓶達人', next: '🔥 保養資深玩家', base: 3, target: 10 };
+      return { title: '🌱 美妝新手', next: '✨ 空瓶達人', base: 0, target: 3 };
+    }
+
+    function updateEmptyAchievementsUI() {
+      const total = emptiesList.length;
+      const rank = getRankInfo(total);
+
+      document.getElementById('headerEmptyCount').textContent = total;
+      document.getElementById('bannerEmptyTotal').textContent = total;
+      document.getElementById('rankBadgeTitle').textContent = rank.title;
+
+      if (rank.next) {
+        const pct = Math.min(100, Math.max(8, Math.round(((total - rank.base) / (rank.target - rank.base)) * 100)));
+        document.getElementById('rankProgressBar').style.width = `${pct}%`;
+        document.getElementById('rankNextHint').textContent = `再完食 ${rank.target - total} 瓶即可解鎖「${rank.next}」稱號！`;
+      } else {
+        document.getElementById('rankProgressBar').style.width = '100%';
+        document.getElementById('rankNextHint').textContent = '已達成最高殿堂級空瓶成就稱號！';
+      }
+    }
+
+    function openFinishBottleModal(id) {
+      const item = inventory.find(x => x.id === id);
+      if (!item) return;
+
+      document.getElementById('finishItemId').value = item.id;
+      document.getElementById('finishItemBrand').textContent = item.brand || item.category || '';
+      document.getElementById('finishItemName').textContent = item.name;
+      document.getElementById('finishReviewNote').value = '';
+
+      const thumb = document.getElementById('finishItemThumb');
+      if (item.photo) {
+        thumb.src = item.photo;
+        thumb.classList.remove('hidden');
+      } else {
+        thumb.classList.add('hidden');
+      }
+
+      document.getElementById('finishBottleModal').classList.remove('hidden');
+    }
+
+    function closeFinishModal() {
+      document.getElementById('finishBottleModal').classList.add('hidden');
+    }
+
+    async function confirmFinishBottle() {
+      const id = document.getElementById('finishItemId').value;
+      const item = inventory.find(x => x.id === id);
+      if (!item) return;
+
+      const ratingEl = document.querySelector('input[name="repurchaseRating"]:checked');
+      const rating = ratingEl ? ratingEl.value : '💖 必回購';
+      const review = document.getElementById('finishReviewNote').value.trim();
+
+      const emptyRecord = {
+        id: 'empty_' + Date.now(),
+        sourceItemId: item.id,
+        category: item.category || '保養品',
+        brand: item.brand || '',
+        name: item.name,
+        barcode: item.barcode || '',
+        location: item.location || '',
+        photo: item.photo || '',
+        rating,
+        review,
+        finishedDate: new Date().toISOString().split('T')[0],
+        finishedAt: Date.now()
+      };
+
+      emptiesList.unshift(emptyRecord);
+      saveLocalEmpties();
+      updateEmptyAchievementsUI();
+      await pushEmptyToFirebase(emptyRecord);
+
+      if ((item.qty || 1) > 1) {
+        item.qty -= 1;
+        item.openDate = '';
+        item.updatedAt = Date.now();
+        saveLocalInventory();
+        await pushToFirebase(item);
+      } else {
+        inventory = inventory.filter(x => x.id !== id);
+        saveLocalInventory();
+        await deleteFromFirebase(id);
+      }
+
+      closeFinishModal();
+      renderLocationTabs();
+      renderItems();
+    }
+
+    function openEmptiesModal() {
+      const total = emptiesList.length;
+      const mustBuy = emptiesList.filter(x => (x.rating || '').includes('必回購')).length;
+      const rank = getRankInfo(total);
+
+      document.getElementById('modalTotalEmpties').textContent = total;
+      document.getElementById('modalMustBuyCount').textContent = mustBuy;
+      document.getElementById('modalRankLabel').textContent = rank.title;
+
+      const container = document.getElementById('emptiesListContainer');
+      if (emptiesList.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 space-y-2">
+            <div class="text-4xl">🍾</div>
+            <div class="text-sm font-bold text-slate-700">還沒有空瓶紀錄喔！</div>
+            <div class="text-xs text-slate-400">當手邊的保養品或日用品用完時，點擊卡片上的「✨ 空瓶」即可收錄戰績</div>
+          </div>`;
+      } else {
+        container.innerHTML = emptiesList.map(rec => `
+          <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 flex items-center gap-3">
+            <div class="w-14 h-14 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+              ${rec.photo
+                ? `<img src="${rec.photo}" class="w-full h-full object-cover" />`
+                : `<i class="fa-solid fa-bottle-droplet text-amber-400 text-lg"></i>`}
+            </div>
+            <div class="flex-1 min-w-0 space-y-0.5">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">${rec.rating || '💖 必回購'}</span>
+                <span class="text-[11px] font-bold text-slate-500 truncate">${rec.brand || rec.category}</span>
+              </div>
+              <div class="text-xs font-bold text-slate-800 truncate">${rec.name}</div>
+              <div class="text-[11px] text-slate-500 truncate">
+                完食日：${rec.finishedDate || ''} ${rec.review ? `· 「${rec.review}」` : ''}
+              </div>
+            </div>
+            <button onclick='restockFromEmpty(${JSON.stringify(rec).replace(/'/g, "&#39;")})'
+              class="px-2.5 py-1.5 rounded-xl bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-[11px] font-bold shrink-0">
+              + 回購補貨
+            </button>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('emptiesModal').classList.remove('hidden');
+    }
+
+    function closeEmptiesModal() {
+      document.getElementById('emptiesModal').classList.add('hidden');
+    }
+
+    function restockFromEmpty(rec) {
+      closeEmptiesModal();
+      openItemModal();
+      document.getElementById('itemCategory').value = rec.category || '保養品';
+      document.getElementById('itemBrand').value = rec.brand || '';
+      document.getElementById('itemName').value = rec.name || '';
+      document.getElementById('itemBarcode').value = rec.barcode || '';
+      document.getElementById('itemLocation').value = rec.location || '';
+      if (rec.photo) setThumbPreview(rec.photo);
+    }
+
+    // ==================== AI 視覺辨識與多層條碼查詢 ====================
+
     async function handleSmartBottleCapture(event) {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -470,7 +877,6 @@
           reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-              // 1. 辨識用壓縮圖（長邊 1024px，清晰度高且上傳快速）
               const maxAiSize = 1024;
               let w1 = img.width, h1 = img.height;
               if (w1 > maxAiSize || h1 > maxAiSize) {
@@ -482,7 +888,6 @@
               c1.getContext('2d').drawImage(img, 0, 0, w1, h1);
               const aiDataUrl = c1.toDataURL('image/jpeg', 0.8);
 
-              // 2. 封面縮圖用（寬度 320px，約 30KB 節省資料庫空間）
               const maxThumb = 320;
               let w2 = img.width, h2 = img.height;
               if (w2 > maxThumb) { h2 = Math.round(h2 * maxThumb / w2); w2 = maxThumb; }
@@ -583,7 +988,6 @@
       setThumbPreview('');
     }
 
-    // 多層條碼查詢：本機記憶庫 -> Firebase 群眾共享池 -> Vercel 外部多庫 + Gemini AI 結構化清洗
     async function lookupBarcodeInfo() {
       const code = document.getElementById('itemBarcode').value.trim();
       if (!code) return;
@@ -593,13 +997,11 @@
       statusBox.classList.remove('hidden');
       statusText.innerHTML = `🔍 正在查詢條碼 <b>${code}</b>...`;
 
-      // 1. 優先查詢本機記憶庫
       if (localBarcodeMemory[code]) {
         applyBarcodeRecord(localBarcodeMemory[code], '本機記憶庫');
         return;
       }
 
-      // 2. 查詢 Firebase 群眾共享條碼庫
       const { dbUrl } = getFirebaseConfig();
       if (dbUrl) {
         try {
@@ -616,7 +1018,6 @@
         } catch (e) {}
       }
 
-      // 3. 查詢 Vercel 多層外部條碼資料庫（樂天 / JANCODE / Open Beauty Facts）並由 AI 自動清洗結構化
       try {
         const apiUrl = getApiBaseUrl();
         const res = await fetch(`${apiUrl}/barcode?code=${encodeURIComponent(code)}`);
@@ -634,7 +1035,6 @@
             }
             if (st.pao !== undefined) document.getElementById('itemPao').value = String(st.pao);
 
-            // 自動快取至本機與 Firebase 群眾共享池，下次任何人掃同一支條碼 0 秒秒填
             const meta = {
               brand: st.brand || '',
               name: st.name || data.rawTitle,
@@ -715,6 +1115,7 @@
         document.getElementById('itemBarcode').value = item.barcode || '';
         document.getElementById('itemBrand').value = item.brand || '';
         document.getElementById('itemName').value = item.name || '';
+        document.getElementById('itemLocation').value = item.location || '';
         document.getElementById('itemQty').value = item.qty ?? 1;
         document.getElementById('itemMinQty').value = item.minQty ?? '';
         document.getElementById('itemUnit').value = item.unit || '瓶';
@@ -742,6 +1143,7 @@
       const brand = document.getElementById('itemBrand').value.trim();
       const name = document.getElementById('itemName').value.trim();
       const category = document.getElementById('itemCategory').value;
+      const location = document.getElementById('itemLocation').value.trim();
       const pao = parseInt(document.getElementById('itemPao').value || '0', 10);
 
       const newItem = {
@@ -750,6 +1152,7 @@
         barcode,
         brand,
         name,
+        location,
         qty: parseInt(document.getElementById('itemQty').value || '0', 10),
         minQty: document.getElementById('itemMinQty').value !== '' ? parseInt(document.getElementById('itemMinQty').value, 10) : null,
         unit: document.getElementById('itemUnit').value.trim() || '瓶',
@@ -784,12 +1187,19 @@
       }
 
       closeItemModal();
+      renderLocationTabs();
       renderItems();
     }
 
     async function adjustQty(id, delta) {
       const item = inventory.find(x => x.id === id);
       if (!item) return;
+
+      if ((item.qty || 1) === 1 && delta < 0) {
+        openFinishBottleModal(id);
+        return;
+      }
+
       item.qty = Math.max(0, (item.qty || 0) + delta);
       item.updatedAt = Date.now();
       saveLocalInventory();
@@ -798,9 +1208,10 @@
     }
 
     async function removeItem(id) {
-      if (!confirm('確定要刪除這筆庫存紀錄嗎？')) return;
+      if (!confirm('確定要直接刪除這筆紀錄嗎？（若已用完請點「✨ 空瓶」可累積成就）')) return;
       inventory = inventory.filter(x => x.id !== id);
       saveLocalInventory();
+      renderLocationTabs();
       renderItems();
       await deleteFromFirebase(id);
     }
@@ -862,13 +1273,15 @@
 
       const filtered = inventory.filter(item => {
         if (currentCategory !== '全部' && item.category !== currentCategory) return false;
+        if (currentLocationFilter !== '全部位置' && (item.location || '').trim() !== currentLocationFilter) return false;
+
         const exp = getExpiryStatus(item);
         if (currentFilter === 'opened' && !item.openDate) return false;
         if (currentFilter === 'expiring' && exp.status === 'normal') return false;
         if (currentFilter === 'low' && !(item.minQty !== null && item.qty <= item.minQty)) return false;
 
         if (q) {
-          const hay = `${item.brand || ''} ${item.name || ''} ${item.note || ''} ${item.barcode || ''}`.toLowerCase();
+          const hay = `${item.brand || ''} ${item.name || ''} ${item.location || ''} ${item.note || ''} ${item.barcode || ''}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         return true;
@@ -905,6 +1318,7 @@
             <div class="flex-1 min-w-0 space-y-1">
               <div class="flex items-center gap-1.5">
                 <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">${item.category || '保養品'}</span>
+                ${item.location ? `<span class="px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200/60 text-[10px] font-bold shrink-0">📍 ${item.location}</span>` : ''}
                 ${item.brand ? `<span class="text-xs font-bold text-rose-600 truncate">${item.brand}</span>` : ''}
               </div>
               <div class="text-sm font-bold text-slate-800 truncate">${item.name}</div>
@@ -916,15 +1330,18 @@
               </div>
             </div>
 
-            <div class="flex flex-col items-end gap-2 shrink-0">
+            <div class="flex flex-col items-end gap-1.5 shrink-0">
               <div class="flex items-center gap-1.5 bg-slate-50 rounded-xl p-1 border border-slate-200/70">
                 <button onclick="adjustQty('${item.id}', -1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">-</button>
                 <span class="text-xs font-extrabold min-w-[2.2rem] text-center">${item.qty ?? 1}${item.unit || '瓶'}</span>
                 <button onclick="adjustQty('${item.id}', 1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">+</button>
               </div>
-              <div class="flex items-center gap-2 text-xs text-slate-400">
-                <button onclick='openItemModal(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="hover:text-indigo-600"><i class="fa-solid fa-pen"></i></button>
-                <button onclick="removeItem('${item.id}')" class="hover:text-rose-600"><i class="fa-solid fa-trash"></i></button>
+              <div class="flex items-center gap-2 text-xs">
+                <button onclick="openFinishBottleModal('${item.id}')" class="px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-700 font-bold text-[11px]">
+                  ✨ 空瓶
+                </button>
+                <button onclick='openItemModal(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="text-slate-400 hover:text-indigo-600"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="removeItem('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button>
               </div>
             </div>
           </div>`;
