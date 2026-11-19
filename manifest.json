@@ -1,6 +1,6 @@
 {
   "name": "美妝與日用品庫存管家",
-  "short_name": "美妝庫存管家",
+  "short_name": "Beauty stock",
   "description": "AI 視覺辨識、條碼自動建檔、效期預警與空瓶成就管理助手",
   "start_url": "/index.html",
   "scope": "/",
