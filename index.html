@@ -891,22 +891,24 @@
       if (rec.photo) setThumbPreview(rec.photo);
     }
 
-    // ==================== 圖片 EXIF 自動轉正與壓縮核心 ====================
+    // ==================== 圖片 EXIF 自動轉正與壓縮核心（極速版） ====================
 
     async function processPhotoWithAutoOrientation(file) {
+      const AI_MAX_SIZE = 768;
+      const AI_QUALITY = 0.68;
+
       if (typeof createImageBitmap === 'function') {
         try {
           const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-          const maxAiSize = 1024;
           let w1 = bitmap.width, h1 = bitmap.height;
-          if (w1 > maxAiSize || h1 > maxAiSize) {
-            if (w1 > h1) { h1 = Math.round(h1 * maxAiSize / w1); w1 = maxAiSize; }
-            else { w1 = Math.round(w1 * maxAiSize / h1); h1 = maxAiSize; }
+          if (w1 > AI_MAX_SIZE || h1 > AI_MAX_SIZE) {
+            if (w1 > h1) { h1 = Math.round(h1 * AI_MAX_SIZE / w1); w1 = AI_MAX_SIZE; }
+            else { w1 = Math.round(w1 * AI_MAX_SIZE / h1); h1 = AI_MAX_SIZE; }
           }
           const c1 = document.createElement('canvas');
           c1.width = w1; c1.height = h1;
           c1.getContext('2d').drawImage(bitmap, 0, 0, w1, h1);
-          const aiDataUrl = c1.toDataURL('image/jpeg', 0.82);
+          const aiDataUrl = c1.toDataURL('image/jpeg', AI_QUALITY);
 
           const maxThumb = 320;
           let w2 = bitmap.width, h2 = bitmap.height;
@@ -971,7 +973,7 @@
           return canvas.toDataURL('image/jpeg', quality);
         };
 
-        const aiDataUrl = drawRotated(1024, 0.82);
+        const aiDataUrl = drawRotated(AI_MAX_SIZE, AI_QUALITY);
         const thumbUrl = drawRotated(320, 0.65);
         return { fullBase64: aiDataUrl.split(',')[1], thumbDataUrl: thumbUrl };
       } finally {
@@ -1006,6 +1008,30 @@
       return 1;
     }
 
+    function startScanProgress(statusEl) {
+      const steps = [
+        '📸 正在自動轉正方向並最佳化影像...',
+        '🔍 Gemini AI 正在讀取瓶身文字與品牌...',
+        '🏷️ 正在自動判斷分類與開封保質期...',
+        '✨ 即將完成建檔...'
+      ];
+      let stepIdx = 0;
+      const startTime = performance.now();
+      statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-indigo-600 mr-1"></i> ${steps[0]}`;
+
+      const timer = setInterval(() => {
+        if (stepIdx < steps.length - 1) {
+          stepIdx++;
+          statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-indigo-600 mr-1"></i> ${steps[stepIdx]}`;
+        }
+      }, 1100);
+
+      return () => {
+        clearInterval(timer);
+        return ((performance.now() - startTime) / 1000).toFixed(1);
+      };
+    }
+
     async function handleSmartBottleCapture(event) {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -1013,7 +1039,7 @@
       const statusBox = document.getElementById('ocrResultBox');
       const statusText = document.getElementById('ocrStatusText');
       statusBox.classList.remove('hidden');
-      statusText.innerHTML = '⏳ 正在自動轉正方向並呼叫 Gemini AI 視覺辨識...';
+      const stopProgress = startScanProgress(statusText);
 
       try {
         const { fullBase64, thumbDataUrl } = await processPhotoWithAutoOrientation(file);
@@ -1047,8 +1073,10 @@
           document.getElementById('itemNote').value = item.note;
         }
 
-        statusText.innerHTML = `✨ <b class="text-emerald-700">Gemini AI 視覺辨識完成！</b>（已自動修正角度並帶入封面縮圖）`;
+        const elapsed = stopProgress();
+        statusText.innerHTML = `✨ <b class="text-emerald-700">Gemini AI 視覺辨識完成！（耗時 ${elapsed} 秒）</b>`;
       } catch (err) {
+        stopProgress();
         statusText.innerHTML = `⚠️ <b class="text-rose-600">Gemini 辨識失敗：</b>${err.message}`;
       } finally {
         event.target.value = '';
