@@ -25,8 +25,8 @@ export default async function handler(req, res) {
   "note": "色號、款式或規格備註（無則留空）"
 }`;
 
-    // 使用速度最快的 Flash-Lite 作為首選，避免無效模型重試浪費時間
-    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+    // 直接首選官方指定的最新極速模型 gemini-3.5-flash-lite
+    const models = ['gemini-3.5-flash', 'gemini-3.5-flash-lite'];
     let lastStatus = 500;
     let lastData = null;
 
