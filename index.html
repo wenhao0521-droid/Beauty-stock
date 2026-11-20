@@ -87,11 +87,11 @@
       </div>
     </section>
 
-    <!-- 統計摘要卡片 -->
+    <!-- 統計摘要卡片（四宮格選中粗框） -->
     <section class="grid grid-cols-4 gap-2">
-      <button onclick="setFilter('all')" id="stat-all" class="bg-white rounded-2xl p-2.5 border border-rose-100 shadow-sm text-center transition">
+      <button onclick="setFilter('all')" id="stat-all" class="bg-rose-50/40 rounded-2xl p-2.5 border-2 border-rose-500 shadow-sm text-center transition">
         <div class="text-lg font-extrabold text-slate-800" id="countAll">0</div>
-        <div class="text-[11px] text-slate-500">全部品項</div>
+        <div class="text-[11px] font-bold text-rose-700">全部品項</div>
       </button>
       <button onclick="setFilter('opened')" id="stat-opened" class="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm text-center transition">
         <div class="text-lg font-extrabold text-emerald-600" id="countOpened">0</div>
@@ -585,6 +585,7 @@
       ensurePersonalSpaceId();
       inventory = loadMergedLocalInventory();
       emptiesList = loadLocalEmpties();
+      updateStatFilterUI();
       renderLocationTabs();
       renderItems();
       updateEmptyAchievementsUI();
@@ -723,7 +724,7 @@
           <button onclick="setLocationFilter('${loc.replace(/'/g, "\\'")}')"
             class="px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
               active
-                ? 'bg-sky-600 text-white shadow-2xs'
+                ? 'bg-sky-600 text-white shadow-2xs ring-2 ring-sky-300'
                 : 'bg-sky-50 text-sky-700 border border-sky-200/80 hover:bg-sky-100'
             }">
             <i class="fa-solid fa-location-dot text-[10px]"></i>
@@ -1235,7 +1236,7 @@
       setThumbPreview('');
 
       if (item) {
-        document.getElementById('modalTitle').textContent = '編輯庫存品項';
+        document.getElementById('modalTitle').textContent = '編輯 / 查看品項詳情';
         document.getElementById('editItemId').value = item.id;
         document.getElementById('itemCategory').value = item.category || '保養品';
         document.getElementById('itemBarcode').value = item.barcode || '';
@@ -1368,7 +1369,7 @@
       currentCategory = cat;
       document.querySelectorAll('.cat-tab').forEach(btn => {
         if (btn.dataset.cat === cat) {
-          btn.className = 'cat-tab px-3.5 py-1.5 rounded-full text-xs font-bold bg-rose-500 text-white shrink-0';
+          btn.className = 'cat-tab px-3.5 py-1.5 rounded-full text-xs font-bold bg-rose-500 text-white shrink-0 ring-2 ring-rose-300';
         } else {
           btn.className = 'cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0';
         }
@@ -1376,8 +1377,50 @@
       renderItems();
     }
 
+    // 更新四宮格統計卡片選中粗框樣式
+    function updateStatFilterUI() {
+      const styles = {
+        all: {
+          active: 'bg-rose-50/50 rounded-2xl p-2.5 border-2 border-rose-500 shadow-sm text-center transition',
+          inactive: 'bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm text-center transition hover:border-slate-200',
+          labelActive: 'text-[11px] font-bold text-rose-700',
+          labelInactive: 'text-[11px] text-slate-500'
+        },
+        opened: {
+          active: 'bg-emerald-50/50 rounded-2xl p-2.5 border-2 border-emerald-500 shadow-sm text-center transition',
+          inactive: 'bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm text-center transition hover:border-slate-200',
+          labelActive: 'text-[11px] font-bold text-emerald-700',
+          labelInactive: 'text-[11px] text-slate-500'
+        },
+        expiring: {
+          active: 'bg-amber-50/50 rounded-2xl p-2.5 border-2 border-amber-500 shadow-sm text-center transition',
+          inactive: 'bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm text-center transition hover:border-slate-200',
+          labelActive: 'text-[11px] font-bold text-amber-700',
+          labelInactive: 'text-[11px] text-slate-500'
+        },
+        low: {
+          active: 'bg-rose-50/50 rounded-2xl p-2.5 border-2 border-rose-500 shadow-sm text-center transition',
+          inactive: 'bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm text-center transition hover:border-slate-200',
+          labelActive: 'text-[11px] font-bold text-rose-700',
+          labelInactive: 'text-[11px] text-slate-500'
+        }
+      };
+
+      ['all', 'opened', 'expiring', 'low'].forEach(key => {
+        const el = document.getElementById(`stat-${key}`);
+        if (!el) return;
+        const isSelected = currentFilter === key;
+        el.className = isSelected ? styles[key].active : styles[key].inactive;
+        const labelDiv = el.children[1];
+        if (labelDiv) {
+          labelDiv.className = isSelected ? styles[key].labelActive : styles[key].labelInactive;
+        }
+      });
+    }
+
     function setFilter(filter) {
       currentFilter = filter;
+      updateStatFilterUI();
       renderItems();
     }
 
@@ -1433,8 +1476,11 @@
           ? `<span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 font-bold">${exp.label}</span>`
           : exp.label ? `<span class="text-slate-400">${exp.label}</span>` : '';
 
+        const itemJsonAttr = JSON.stringify(item).replace(/'/g, "&#39;");
+
         return `
-          <div class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-xs flex gap-3 items-center">
+          <div onclick='openItemModal(${itemJsonAttr})'
+            class="cursor-pointer bg-white rounded-2xl p-3.5 border border-slate-100 hover:border-rose-300 active:scale-[0.995] shadow-xs flex gap-3 items-center transition">
             <div class="w-16 h-16 rounded-xl bg-rose-50/70 border border-rose-100 flex items-center justify-center overflow-hidden shrink-0">
               ${item.photo
                 ? `<img src="${item.photo}" class="w-full h-full object-cover" alt="${item.name}" />`
@@ -1443,7 +1489,7 @@
 
             <div class="flex-1 min-w-0 space-y-1">
               <div class="flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">${item.category || '保養品'}</span>
+                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold shrink-0">${item.category || '保養品'}</span>
                 ${item.location ? `<span class="px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200/60 text-[10px] font-bold shrink-0">📍 ${item.location}</span>` : ''}
                 ${item.brand ? `<span class="text-xs font-bold text-rose-600 truncate">${item.brand}</span>` : ''}
               </div>
@@ -1456,18 +1502,18 @@
               </div>
             </div>
 
-            <div class="flex flex-col items-end gap-1.5 shrink-0">
+            <div onclick="event.stopPropagation()" class="flex flex-col items-end gap-1.5 shrink-0">
               <div class="flex items-center gap-1.5 bg-slate-50 rounded-xl p-1 border border-slate-200/70">
-                <button onclick="adjustQty('${item.id}', -1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">-</button>
+                <button type="button" onclick="adjustQty('${item.id}', -1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">-</button>
                 <span class="text-xs font-extrabold min-w-[2.2rem] text-center">${item.qty ?? 1}${item.unit || '瓶'}</span>
-                <button onclick="adjustQty('${item.id}', 1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">+</button>
+                <button type="button" onclick="adjustQty('${item.id}', 1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">+</button>
               </div>
               <div class="flex items-center gap-2 text-xs">
-                <button onclick="openFinishBottleModal('${item.id}')" class="px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-700 font-bold text-[11px]">
+                <button type="button" onclick="openFinishBottleModal('${item.id}')" class="px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-700 font-bold text-[11px]">
                   ✨ 空瓶
                 </button>
-                <button onclick='openItemModal(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="text-slate-400 hover:text-indigo-600"><i class="fa-solid fa-pen"></i></button>
-                <button onclick="removeItem('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button>
+                <button type="button" onclick='openItemModal(${itemJsonAttr})' class="text-slate-400 hover:text-indigo-600"><i class="fa-solid fa-pen"></i></button>
+                <button type="button" onclick="removeItem('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button>
               </div>
             </div>
           </div>`;
