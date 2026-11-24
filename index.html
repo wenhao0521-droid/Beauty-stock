@@ -455,6 +455,7 @@
     const DEFAULT_FIREBASE_URL = 'https://beauty-stock-cf6db-default-rtdb.asia-southeast1.firebasedatabase.app';
     const PRIMARY_STORAGE_KEY = 'beauty_stock_items';
     const EMPTIES_STORAGE_KEY = 'beauty_stock_empties';
+    const BARCODE_CONSENSUS_THRESHOLD = 2; // 達到 2 位不同用戶確認即自動鎖定為標準條碼資料
 
     let inventory = [];
     let emptiesList = [];
@@ -592,7 +593,7 @@
       syncFromFirebase();
     });
 
-    // 精準讀取當前使用者專屬空間（不再抓取所有房間列表，確保多用戶隱私隔離）
+    // 精準讀取當前使用者專屬空間（確保多用戶隱私隔離）
     async function syncFromFirebase() {
       const { dbUrl, spaceId } = getFirebaseConfig();
       const dot = document.getElementById('syncStatusDot');
@@ -686,6 +687,94 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(emptyRecord)
         });
+      } catch (e) {}
+    }
+
+    // ==================== 群眾共享條碼庫：多數決防篡改同步 ====================
+
+    function normalizeBarcodeText(str) {
+      return String(str || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    async function syncBarcodeWithConsensus(barcode, newMeta) {
+      const { dbUrl, spaceId } = getFirebaseConfig();
+      if (!dbUrl || !barcode || !newMeta.name) return;
+
+      const endpoint = `${dbUrl}/global_beauty_barcodes/${encodeURIComponent(barcode)}.json`;
+      try {
+        const res = await fetch(endpoint);
+        const existing = res.ok ? await res.json() : null;
+
+        // 情況 1：雲端尚無此條碼 -> 建立初始草稿（第 1 票，未鎖定）
+        if (!existing || !existing.name) {
+          const initialRecord = {
+            ...newMeta,
+            confirmCount: 1,
+            voters: { [spaceId]: true },
+            locked: false,
+            updatedAt: Date.now()
+          };
+          await fetch(endpoint, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(initialRecord)
+          });
+          localBarcodeMemory[barcode] = initialRecord;
+          localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
+          return;
+        }
+
+        // 情況 2：已達多數共識並鎖定 -> 保護標準資料不被覆蓋，僅保留使用者個人庫存
+        if (existing.locked === true) {
+          localBarcodeMemory[barcode] = existing;
+          localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
+          return;
+        }
+
+        // 情況 3：尚未鎖定 -> 比對品牌與品名是否與現有草稿一致
+        const isSameProduct =
+          normalizeBarcodeText(existing.brand) === normalizeBarcodeText(newMeta.brand) &&
+          normalizeBarcodeText(existing.name) === normalizeBarcodeText(newMeta.name);
+
+        if (isSameProduct) {
+          // 同一商品不同空間確認 -> 累加贊成票數，達門檻即鎖定
+          const voters = { ...(existing.voters || {}), [spaceId]: true };
+          const confirmCount = Object.keys(voters).length;
+          const locked = confirmCount >= BARCODE_CONSENSUS_THRESHOLD;
+
+          const updatedRecord = {
+            ...existing,
+            category: newMeta.category || existing.category,
+            pao: newMeta.pao ?? existing.pao,
+            voters,
+            confirmCount,
+            locked,
+            updatedAt: Date.now()
+          };
+          await fetch(endpoint, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedRecord)
+          });
+          localBarcodeMemory[barcode] = updatedRecord;
+          localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
+        } else {
+          // 尚未鎖定且發現資料不同 -> 允許糾錯覆蓋，並以新版本重新累計第 1 票
+          const correctedRecord = {
+            ...newMeta,
+            confirmCount: 1,
+            voters: { [spaceId]: true },
+            locked: false,
+            updatedAt: Date.now()
+          };
+          await fetch(endpoint, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(correctedRecord)
+          });
+          localBarcodeMemory[barcode] = correctedRecord;
+          localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
+        }
       } catch (e) {}
     }
 
@@ -1124,11 +1213,7 @@
       statusBox.classList.remove('hidden');
       statusText.innerHTML = `🔍 正在查詢條碼 <b>${code}</b>...`;
 
-      if (localBarcodeMemory[code]) {
-        applyBarcodeRecord(localBarcodeMemory[code], '本機記憶庫');
-        return;
-      }
-
+      // 優先讀取雲端群眾共享條碼庫以取得最新共識版本
       const { dbUrl } = getFirebaseConfig();
       if (dbUrl) {
         try {
@@ -1138,11 +1223,17 @@
             if (fbData && fbData.name) {
               localBarcodeMemory[code] = fbData;
               localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
-              applyBarcodeRecord(fbData, '群眾共享條碼庫');
+              const badge = fbData.locked ? '群眾共享條碼庫（🔒 已驗證標準資料）' : '群眾共享條碼庫';
+              applyBarcodeRecord(fbData, badge);
               return;
             }
           }
         } catch (e) {}
+      }
+
+      if (localBarcodeMemory[code]) {
+        applyBarcodeRecord(localBarcodeMemory[code], '本機記憶庫');
+        return;
       }
 
       try {
@@ -1166,18 +1257,11 @@
               brand: st.brand || '',
               name: st.name || data.rawTitle,
               category: st.category || '保養品',
-              pao: st.pao ?? 12,
-              updatedAt: Date.now()
+              pao: st.pao ?? 12
             };
             localBarcodeMemory[code] = meta;
             localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
-            if (dbUrl) {
-              fetch(`${dbUrl}/global_beauty_barcodes/${encodeURIComponent(code)}.json`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(meta)
-              }).catch(() => {});
-            }
+            await syncBarcodeWithConsensus(code, meta);
 
             statusText.innerHTML = `✨ 已從 <b>${data.source}</b> 查詢並由 AI 自動整理完成！`;
             return;
@@ -1193,7 +1277,7 @@
       if (rec.name) document.getElementById('itemName').value = rec.name;
       if (rec.category) document.getElementById('itemCategory').value = rec.category;
       if (rec.pao !== undefined) document.getElementById('itemPao').value = String(rec.pao);
-      document.getElementById('ocrStatusText').innerHTML = `⚡ 已從 <b>${sourceLabel}</b> 0 秒帶入完整商品資料！`;
+      document.getElementById('ocrStatusText').innerHTML = `⚡ 已從 <b>${sourceLabel}</b> 帶入完整商品資料！`;
     }
 
     function startBarcodeScanner() {
@@ -1299,18 +1383,10 @@
       await pushToFirebase(newItem);
 
       if (barcode && name) {
-        const meta = { brand, name, category, pao, updatedAt: Date.now() };
-        localBarcodeMemory[barcode] = meta;
+        const meta = { brand, name, category, pao };
+        localBarcodeMemory[barcode] = { ...meta, updatedAt: Date.now() };
         localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
-
-        const { dbUrl } = getFirebaseConfig();
-        if (dbUrl) {
-          fetch(`${dbUrl}/global_beauty_barcodes/${encodeURIComponent(barcode)}.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(meta)
-          }).catch(() => {});
-        }
+        await syncBarcodeWithConsensus(barcode, meta);
       }
 
       closeItemModal();
