@@ -27,13 +27,13 @@
 
   <!-- 頂部導覽列 -->
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-rose-100 px-4 py-3 shadow-sm">
-    <div class="max-w-2xl mx-auto flex items-center justify-between gap-2">
+    <div class="max-w-2xl mx-auto flex items-center justify-between gap-1.5">
       <div class="flex items-center gap-2 min-w-0">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white flex items-center justify-center shadow-sm shrink-0">
           <i class="fa-solid fa-sparkles"></i>
         </div>
         <div class="min-w-0">
-          <h1 class="text-base font-bold text-slate-800 truncate">美妝與日用品庫存管家</h1>
+          <h1 class="text-sm sm:text-base font-bold text-slate-800 truncate" data-i18n="appTitle">美妝與日用品庫存管家</h1>
           <div class="flex items-center gap-1.5 text-[11px] text-slate-500">
             <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
             <span id="syncStatusText" class="truncate">正在載入專屬雲端空間...</span>
@@ -41,21 +41,25 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 shrink-0">
-        <button onclick="openEmptiesModal()" class="px-2.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-800 text-xs font-bold flex items-center gap-1 transition">
+      <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+        <button onclick="openEmptiesModal()" class="px-2 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-800 text-xs font-bold flex items-center gap-1 transition">
           <i class="fa-solid fa-trophy text-amber-500"></i>
-          <span>空瓶</span>
+          <span data-i18n="btnEmpties">空瓶</span>
           <span id="headerEmptyCount" class="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px]">0</span>
         </button>
 
-        <button onclick="openSettingsModal()" class="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition">
+        <button onclick="openSettingsModal()" class="px-2 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 transition">
           <i class="fa-solid fa-cloud text-sky-500"></i>
-          <span class="hidden sm:inline">雲端空間</span>
+          <span class="hidden sm:inline" data-i18n="btnCloud">雲端空間</span>
         </button>
 
-        <button onclick="openItemModal()" class="px-3 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white text-xs font-bold shadow-sm flex items-center gap-1 transition">
+        <button onclick="toggleLanguage()" id="langToggleBtn" class="px-2 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 text-indigo-700 text-[11px] font-extrabold transition">
+          EN
+        </button>
+
+        <button onclick="openItemModal()" class="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white text-xs font-bold shadow-sm flex items-center gap-1 transition">
           <i class="fa-solid fa-plus"></i>
-          <span>新增</span>
+          <span data-i18n="btnAdd">新增</span>
         </button>
       </div>
     </div>
@@ -73,7 +77,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-1.5">
             <span class="text-xs font-extrabold text-amber-900" id="rankBadgeTitle">🌱 美妝新手</span>
-            <span class="text-[11px] text-amber-700 font-medium">· 累積空瓶 <b id="bannerEmptyTotal">0</b> 瓶</span>
+            <span class="text-[11px] text-amber-700 font-medium" id="bannerEmptyStats">· 累積空瓶 <b id="bannerEmptyTotal">0</b> 瓶</span>
           </div>
           <div class="w-44 sm:w-56 h-1.5 bg-amber-200/70 rounded-full overflow-hidden mt-1.5">
             <div id="rankProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-rose-500 rounded-full transition-all duration-500" style="width: 10%"></div>
@@ -82,7 +86,7 @@
         </div>
       </div>
       <div class="text-xs font-bold text-amber-700 shrink-0 flex items-center gap-1">
-        <span>成就牆</span>
+        <span data-i18n="wallLink">成就牆</span>
         <i class="fa-solid fa-chevron-right text-[10px]"></i>
       </div>
     </section>
@@ -91,19 +95,19 @@
     <section class="grid grid-cols-4 gap-2">
       <button onclick="setFilter('all')" id="stat-all" class="bg-rose-50/40 rounded-2xl p-2.5 border-2 border-rose-500 shadow-sm text-center transition">
         <div class="text-lg font-extrabold text-slate-800" id="countAll">0</div>
-        <div class="text-[11px] font-bold text-rose-700">全部品項</div>
+        <div class="text-[11px] font-bold text-rose-700" data-i18n="statAll">全部品項</div>
       </button>
       <button onclick="setFilter('opened')" id="stat-opened" class="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm text-center transition">
         <div class="text-lg font-extrabold text-emerald-600" id="countOpened">0</div>
-        <div class="text-[11px] text-slate-500">已開封</div>
+        <div class="text-[11px] text-slate-500" data-i18n="statOpened">已開封</div>
       </button>
       <button onclick="setFilter('expiring')" id="stat-expiring" class="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm text-center transition">
         <div class="text-lg font-extrabold text-amber-500" id="countExpiring">0</div>
-        <div class="text-[11px] text-slate-500">效期預警</div>
+        <div class="text-[11px] text-slate-500" data-i18n="statExpiring">效期預警</div>
       </button>
       <button onclick="setFilter('low')" id="stat-low" class="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm text-center transition">
         <div class="text-lg font-extrabold text-rose-500" id="countLow">0</div>
-        <div class="text-[11px] text-slate-500">低庫存</div>
+        <div class="text-[11px] text-slate-500" data-i18n="statLow">低庫存</div>
       </button>
     </section>
 
@@ -116,10 +120,10 @@
       </div>
 
       <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-        <button onclick="setCategory('全部')" data-cat="全部" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-bold bg-rose-500 text-white shrink-0">全部</button>
-        <button onclick="setCategory('保養品')" data-cat="保養品" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">保養品</button>
-        <button onclick="setCategory('化妝品')" data-cat="化妝品" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">化妝品</button>
-        <button onclick="setCategory('日用品')" data-cat="日用品" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">日用品</button>
+        <button onclick="setCategory('全部')" data-cat="全部" data-i18n="catAll" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-bold bg-rose-500 text-white shrink-0">全部</button>
+        <button onclick="setCategory('保養品')" data-cat="保養品" data-i18n="catSkincare" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">保養品</button>
+        <button onclick="setCategory('化妝品')" data-cat="化妝品" data-i18n="catMakeup" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">化妝品</button>
+        <button onclick="setCategory('日用品')" data-cat="日用品" data-i18n="catDaily" class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shrink-0">日用品</button>
       </div>
 
       <div id="locationFilterBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1"></div>
@@ -145,26 +149,26 @@
         <!-- 智慧條碼查詢 & AI 視覺辨識卡片 -->
         <div class="bg-gradient-to-br from-rose-50 via-pink-50 to-indigo-50 border border-rose-100 rounded-2xl p-3.5 space-y-3">
           <div>
-            <div class="text-xs font-bold text-slate-800">智慧條碼查詢 & AI 視覺辨識</div>
-            <div class="text-[11px] text-slate-500">直接拍商品正面即可自動轉正建檔並帶入封面縮圖</div>
+            <div class="text-xs font-bold text-slate-800" data-i18n="aiCardTitle">智慧條碼查詢 & AI 視覺辨識</div>
+            <div class="text-[11px] text-slate-500" data-i18n="aiCardDesc">直接拍商品正面即可自動轉正建檔並帶入封面縮圖</div>
           </div>
 
           <div class="flex flex-wrap gap-2">
             <button type="button" onclick="startBarcodeScanner()" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition">
               <i class="fa-solid fa-barcode"></i>
-              <span>掃條碼</span>
+              <span data-i18n="btnScanBarcode">掃條碼</span>
             </button>
 
             <label class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer transition">
               <i class="fa-solid fa-wand-magic-sparkles"></i>
-              <span>✨ Gemini 辨識</span>
+              <span data-i18n="btnGeminiScan">✨ Gemini 辨識</span>
               <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleSmartBottleCapture(event)" />
             </label>
           </div>
 
           <div id="scannerContainer" class="hidden rounded-xl overflow-hidden border border-rose-200 bg-black relative">
             <div id="reader" class="w-full"></div>
-            <button type="button" onclick="stopBarcodeScanner()" class="w-full py-2 bg-slate-800 text-white text-xs font-bold">關閉相機掃描</button>
+            <button type="button" onclick="stopBarcodeScanner()" data-i18n="btnCloseScanner" class="w-full py-2 bg-slate-800 text-white text-xs font-bold">關閉相機掃描</button>
           </div>
 
           <div id="ocrResultBox" class="hidden rounded-xl bg-white/90 border border-indigo-200 p-2.5 text-xs text-slate-700 leading-relaxed">
@@ -176,17 +180,17 @@
         <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 flex items-center gap-3">
           <div class="w-16 h-16 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative">
             <i id="photoPlaceholderIcon" class="fa-regular fa-image text-slate-300 text-xl"></i>
-            <img id="itemPhotoPreview" src="" alt="封面縮圖" class="w-full h-full object-cover hidden" />
+            <img id="itemPhotoPreview" src="" alt="Cover" class="w-full h-full object-cover hidden" />
           </div>
           <div class="flex-1 min-w-0 space-y-1.5">
-            <div class="text-xs font-bold text-slate-700">商品封面縮圖（自動轉正帶入 / 選填）</div>
-            <div class="text-[11px] text-slate-500">使用 Gemini 辨識拍正面時會自動修正方向並帶入</div>
+            <div class="text-xs font-bold text-slate-700" data-i18n="thumbTitle">商品封面縮圖（自動轉正帶入 / 選填）</div>
+            <div class="text-[11px] text-slate-500" data-i18n="thumbDesc">使用 Gemini 辨識拍正面時會自動修正方向並帶入</div>
             <div class="flex items-center gap-2">
               <label class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-[11px] font-medium text-slate-700 cursor-pointer hover:bg-slate-100">
-                <i class="fa-solid fa-camera mr-1"></i>重拍縮圖
+                <i class="fa-solid fa-camera mr-1"></i><span data-i18n="btnRetakeThumb">重拍縮圖</span>
                 <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleManualThumbCapture(event)" />
               </label>
-              <button type="button" onclick="clearThumbPhoto()" class="text-[11px] text-rose-500 hover:underline">清除</button>
+              <button type="button" onclick="clearThumbPhoto()" data-i18n="btnClearThumb" class="text-[11px] text-rose-500 hover:underline">清除</button>
             </div>
           </div>
           <input type="hidden" id="itemPhotoData" />
@@ -195,18 +199,18 @@
         <!-- 分類與條碼 -->
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">商品分類 *</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblCategory">商品分類 *</label>
             <select id="itemCategory" required class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm">
-              <option value="保養品">保養品</option>
-              <option value="化妝品">化妝品</option>
-              <option value="日用品">日用品</option>
+              <option value="保養品" data-i18n="catSkincare">保養品</option>
+              <option value="化妝品" data-i18n="catMakeup">化妝品</option>
+              <option value="日用品" data-i18n="catDaily">日用品</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">條碼編號</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblBarcode">條碼編號</label>
             <div class="flex gap-1">
               <input type="text" id="itemBarcode" placeholder="輸入或掃描" class="w-full min-w-0 px-2.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
-              <button type="button" onclick="lookupBarcodeInfo()" class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold shrink-0">查詢</button>
+              <button type="button" onclick="lookupBarcodeInfo()" data-i18n="btnLookup" class="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold shrink-0">查詢</button>
             </div>
           </div>
         </div>
@@ -215,13 +219,13 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label class="text-xs font-bold text-slate-700">品牌名稱</label>
-              <button type="button" onclick="swapBrandAndName()" class="text-[11px] text-indigo-600 font-medium">⇄ 互換</button>
+              <label class="text-xs font-bold text-slate-700" data-i18n="lblBrand">品牌名稱</label>
+              <button type="button" onclick="swapBrandAndName()" data-i18n="btnSwap" class="text-[11px] text-indigo-600 font-medium">⇄ 互換</button>
             </div>
             <input type="text" id="itemBrand" placeholder="例：TOKIO INKARAMI、肌研" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">商品名稱 *</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblName">商品名稱 *</label>
             <input type="text" id="itemName" required placeholder="完整品名與容量" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
         </div>
@@ -231,34 +235,27 @@
           <div class="flex items-center justify-between">
             <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
               <i class="fa-solid fa-location-dot text-sky-500"></i>
-              <span>存放位置</span>
+              <span data-i18n="lblLocation">存放位置</span>
             </label>
-            <span class="text-[10px] text-slate-400">點選快速填入或直接輸入自訂位置</span>
+            <span class="text-[10px] text-slate-400" data-i18n="locationHint">點選快速填入或直接輸入自訂位置</span>
           </div>
           <input type="text" id="itemLocation" placeholder="例：化妝台、浴室櫃、囤貨箱..."
             class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-sky-400" />
-          <div class="flex flex-wrap gap-1.5">
-            <button type="button" onclick="selectPresetLocation('化妝台')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">💄 化妝台</button>
-            <button type="button" onclick="selectPresetLocation('浴室櫃')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">🚿 浴室櫃</button>
-            <button type="button" onclick="selectPresetLocation('囤貨箱')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">📦 囤貨箱</button>
-            <button type="button" onclick="selectPresetLocation('冰箱冷藏')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">❄️ 冰箱冷藏</button>
-            <button type="button" onclick="selectPresetLocation('隨身化妝包')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">👜 隨身化妝包</button>
-            <button type="button" onclick="selectPresetLocation('床頭櫃')" class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">🛏️ 床頭櫃</button>
-          </div>
+          <div id="presetLocationButtons" class="flex flex-wrap gap-1.5"></div>
         </div>
 
         <!-- 數量、安全庫存、單位 -->
         <div class="grid grid-cols-3 gap-2.5">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">目前數量 *</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblQty">目前數量 *</label>
             <input type="number" id="itemQty" value="1" min="0" required class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">安全庫存</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblMinQty">安全庫存</label>
             <input type="number" id="itemMinQty" placeholder="不提醒" min="0" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">單位</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblUnit">單位</label>
             <input type="text" id="itemUnit" value="瓶" placeholder="瓶/罐/支" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
         </div>
@@ -266,18 +263,18 @@
         <!-- 出廠效期與 PAO 開封保質期 -->
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">出廠有效期限 (EXP)</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblExp">出廠有效期限 (EXP)</label>
             <input type="date" id="itemExpDate" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">開封後保質期 (PAO)</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblPao">開封後保質期 (PAO)</label>
             <select id="itemPao" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm">
-              <option value="0">無限制 / 不計算</option>
-              <option value="3">3 個月 (3M)</option>
-              <option value="6">6 個月 (6M)</option>
-              <option value="12" selected>12 個月 (12M)</option>
-              <option value="18">18 個月 (18M)</option>
-              <option value="24">24 個月 (24M)</option>
+              <option value="0" data-i18n="pao0">無限制 / 不計算</option>
+              <option value="3" data-i18n="pao3">3 個月 (3M)</option>
+              <option value="6" data-i18n="pao6">6 個月 (6M)</option>
+              <option value="12" selected data-i18n="pao12">12 個月 (12M)</option>
+              <option value="18" data-i18n="pao18">18 個月 (18M)</option>
+              <option value="24" data-i18n="pao24">24 個月 (24M)</option>
             </select>
           </div>
         </div>
@@ -285,18 +282,18 @@
         <!-- 開封狀態與色號備註 -->
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">開封日期（已開封再填）</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblOpenDate">開封日期（已開封再填）</label>
             <input type="date" id="itemOpenDate" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">色號 / 規格備註</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblNote">色號 / 規格備註</label>
             <input type="text" id="itemNote" placeholder="例：#02 乾燥玫瑰 / 補充包" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" />
           </div>
         </div>
 
         <div class="pt-2 flex gap-2">
-          <button type="button" onclick="closeItemModal()" class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold">取消</button>
-          <button type="submit" class="flex-2 w-2/3 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-bold shadow-md">儲存品項</button>
+          <button type="button" onclick="closeItemModal()" data-i18n="btnCancel" class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold">取消</button>
+          <button type="submit" data-i18n="btnSave" class="flex-2 w-2/3 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-bold shadow-md">儲存品項</button>
         </div>
       </form>
     </div>
@@ -308,7 +305,7 @@
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center gap-2">
           <span class="text-xl">🎉</span>
-          <h3 class="text-base font-bold text-slate-800">恭喜完食空瓶！記錄空瓶成就</h3>
+          <h3 class="text-base font-bold text-slate-800" data-i18n="finishModalTitle">恭喜完食空瓶！記錄空瓶成就</h3>
         </div>
         <button onclick="closeFinishModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
           <i class="fa-solid fa-xmark"></i>
@@ -325,23 +322,23 @@
       </div>
 
       <div class="space-y-2">
-        <label class="block text-xs font-bold text-slate-700">空瓶回購評價 *</label>
+        <label class="block text-xs font-bold text-slate-700" data-i18n="lblRating">空瓶回購評價 *</label>
         <div class="grid grid-cols-3 gap-2">
           <label class="cursor-pointer">
             <input type="radio" name="repurchaseRating" value="💖 必回購" checked class="peer hidden" />
-            <div class="py-2 px-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-600 peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-700 transition">
+            <div data-i18n="rateMustBuy" class="py-2 px-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-600 peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-700 transition">
               💖 必回購
             </div>
           </label>
           <label class="cursor-pointer">
             <input type="radio" name="repurchaseRating" value="👍 還不錯" class="peer hidden" />
-            <div class="py-2 px-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-600 peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-700 transition">
+            <div data-i18n="rateGood" class="py-2 px-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-600 peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-700 transition">
               👍 還不錯
             </div>
           </label>
           <label class="cursor-pointer">
             <input type="radio" name="repurchaseRating" value="🙅 不回購" class="peer hidden" />
-            <div class="py-2 px-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-600 peer-checked:bg-slate-100 peer-checked:border-slate-500 peer-checked:text-slate-800 transition">
+            <div data-i18n="rateNoBuy" class="py-2 px-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-600 peer-checked:bg-slate-100 peer-checked:border-slate-500 peer-checked:text-slate-800 transition">
               🙅 不回購
             </div>
           </label>
@@ -349,14 +346,14 @@
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">空瓶記心得（選填）</label>
+        <label class="block text-xs font-bold text-slate-700 mb-1" data-i18n="lblReviewNote">空瓶記心得（選填）</label>
         <input type="text" id="finishReviewNote" placeholder="例：保濕度超棒、已回購第三瓶！"
           class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
       </div>
 
       <div class="flex gap-2 pt-1">
-        <button onclick="closeFinishModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">取消</button>
-        <button onclick="confirmFinishBottle()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold shadow-sm">
+        <button onclick="closeFinishModal()" data-i18n="btnCancel" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">取消</button>
+        <button onclick="confirmFinishBottle()" data-i18n="btnConfirmEmpty" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold shadow-sm">
           🏆 收錄空瓶成就 (+1)
         </button>
       </div>
@@ -369,9 +366,9 @@
       <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-5 py-4 text-white flex items-center justify-between shrink-0">
         <div>
           <h2 class="text-base font-extrabold flex items-center gap-1.5">
-            <span>🏆 空瓶成就牆（空瓶記）</span>
+            <span data-i18n="emptiesWallTitle">🏆 空瓶成就牆（空瓶記）</span>
           </h2>
-          <p class="text-[11px] text-amber-100 mt-0.5">見證每一瓶物盡其用的保養與美妝戰績</p>
+          <p class="text-[11px] text-amber-100 mt-0.5" data-i18n="emptiesWallSub">見證每一瓶物盡其用的保養與美妝戰績</p>
         </div>
         <button onclick="closeEmptiesModal()" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center">
           <i class="fa-solid fa-xmark"></i>
@@ -381,15 +378,15 @@
       <div class="grid grid-cols-3 gap-2 p-4 bg-amber-50/60 border-b border-amber-100 shrink-0 text-center">
         <div class="bg-white rounded-2xl p-2.5 border border-amber-100">
           <div class="text-lg font-extrabold text-amber-600" id="modalTotalEmpties">0</div>
-          <div class="text-[11px] text-slate-500">累積空瓶數</div>
+          <div class="text-[11px] text-slate-500" data-i18n="statTotalEmpties">累積空瓶數</div>
         </div>
         <div class="bg-white rounded-2xl p-2.5 border border-rose-100">
           <div class="text-lg font-extrabold text-rose-600" id="modalMustBuyCount">0</div>
-          <div class="text-[11px] text-slate-500">💖 必回購神品</div>
+          <div class="text-[11px] text-slate-500" data-i18n="statMustBuy">💖 必回購神品</div>
         </div>
         <div class="bg-white rounded-2xl p-2.5 border border-indigo-100">
           <div class="text-xs font-extrabold text-indigo-700 pt-1.5" id="modalRankLabel">美妝新手</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">目前成就稱號</div>
+          <div class="text-[11px] text-slate-500 mt-0.5" data-i18n="statCurrentRank">目前成就稱號</div>
         </div>
       </div>
 
@@ -401,42 +398,54 @@
   <div id="settingsModal" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="text-base font-bold text-slate-800">專屬雲端空間 & 家庭共享</h3>
+        <h3 class="text-base font-bold text-slate-800" data-i18n="settingsTitle">專屬雲端空間 & 家庭共享</h3>
         <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
+      <!-- 語言切換區塊 -->
+      <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-3 flex items-center justify-between">
+        <div class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-globe text-indigo-600"></i>
+          <span data-i18n="lblLanguage">介面語言 / Language</span>
+        </div>
+        <div class="flex gap-1.5">
+          <button type="button" onclick="setLanguage('zh-TW')" id="langOptZh" class="px-2.5 py-1 rounded-lg text-xs font-bold transition">繁體中文</button>
+          <button type="button" onclick="setLanguage('en')" id="langOptEn" class="px-2.5 py-1 rounded-lg text-xs font-bold transition">English</button>
+        </div>
+      </div>
+
       <div class="bg-sky-50 border border-sky-200/80 rounded-2xl p-3 text-[11px] text-sky-900 leading-relaxed space-y-1">
-        <div class="font-bold">🔒 獨立資料保護機制已啟用</div>
-        <div>每支手機皆擁有獨立隨機空間代碼，確保個人庫存互不干擾；若要與家人共享，只需雙方填入相同的自訂空間代碼即可即時同步。</div>
+        <div class="font-bold" data-i18n="privacyShieldTitle">🔒 獨立資料保護機制已啟用</div>
+        <div data-i18n="privacyShieldDesc">每支手機皆擁有獨立隨機空間代碼，確保個人庫存互不干擾；若要與家人共享，只需雙方填入相同的自訂空間代碼即可即時同步。</div>
       </div>
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">我的專屬雲端空間代碼（家庭共享碼）</label>
+          <label class="block font-bold text-slate-700 mb-1" data-i18n="lblSpaceCode">我的專屬雲端空間代碼（家庭共享碼）</label>
           <div class="flex gap-1.5">
             <input type="text" id="settingSpaceId" placeholder="輸入或產生專屬空間代碼"
               class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-xs font-mono font-bold text-slate-800" />
-            <button type="button" onclick="copySpaceCode()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold shrink-0">複製</button>
+            <button type="button" onclick="copySpaceCode()" data-i18n="btnCopy" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold shrink-0">複製</button>
           </div>
           <div class="mt-1.5 flex items-center justify-between">
-            <button type="button" onclick="generateNewRandomSpace()" class="text-[11px] text-indigo-600 hover:underline font-medium">
+            <button type="button" onclick="generateNewRandomSpace()" data-i18n="btnGenSpace" class="text-[11px] text-indigo-600 hover:underline font-medium">
               🎲 產生全新獨立空間代碼
             </button>
-            <a href="/privacy.html" target="_blank" class="text-[11px] text-slate-400 hover:underline">隱私權政策</a>
+            <a href="/privacy.html" target="_blank" data-i18n="linkPrivacy" class="text-[11px] text-slate-400 hover:underline">隱私權政策</a>
           </div>
         </div>
 
         <details class="text-[11px] text-slate-500 pt-1">
-          <summary class="cursor-pointer font-medium text-slate-600">進階伺服器連線設定</summary>
+          <summary class="cursor-pointer font-medium text-slate-600" data-i18n="advSettings">進階伺服器連線設定</summary>
           <div class="space-y-2.5 mt-2 pt-2 border-t border-slate-100">
             <div>
-              <label class="block font-bold text-slate-600 mb-1">AI 視覺與條碼 API 網址</label>
+              <label class="block font-bold text-slate-600 mb-1" data-i18n="lblWorkerUrl">AI 視覺與條碼 API 網址</label>
               <input type="url" id="settingWorkerUrl" class="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-[11px]" />
             </div>
             <div>
-              <label class="block font-bold text-slate-600 mb-1">Firebase Realtime Database 網址</label>
+              <label class="block font-bold text-slate-600 mb-1" data-i18n="lblFirebaseUrl">Firebase Realtime Database 網址</label>
               <input type="url" id="settingFirebaseUrl" class="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-[11px]" />
             </div>
           </div>
@@ -444,8 +453,8 @@
       </div>
 
       <div class="flex gap-2 pt-2">
-        <button onclick="closeSettingsModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">關閉</button>
-        <button onclick="saveCloudSettings()" class="flex-1 py-2.5 rounded-xl bg-sky-600 text-white text-xs font-bold">儲存並同步</button>
+        <button onclick="closeSettingsModal()" data-i18n="btnClose" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">關閉</button>
+        <button onclick="saveCloudSettings()" data-i18n="btnSaveSync" class="flex-1 py-2.5 rounded-xl bg-sky-600 text-white text-xs font-bold">儲存並同步</button>
       </div>
     </div>
   </div>
@@ -455,26 +464,395 @@
     const DEFAULT_FIREBASE_URL = 'https://beauty-stock-cf6db-default-rtdb.asia-southeast1.firebasedatabase.app';
     const PRIMARY_STORAGE_KEY = 'beauty_stock_items';
     const EMPTIES_STORAGE_KEY = 'beauty_stock_empties';
-    const BARCODE_CONSENSUS_THRESHOLD = 2; // 達到 2 位不同用戶確認即自動鎖定為標準條碼資料
+    const BARCODE_CONSENSUS_THRESHOLD = 2;
+
+    // ==================== 多語系字典與設定 (i18n) ====================
+    const I18N = {
+      'zh-TW': {
+        appTitle: '美妝與日用品庫存管家',
+        syncLoading: '正在載入專屬雲端空間...',
+        syncLocal: '本機模式',
+        syncSpace: (id, count) => count !== null ? `專屬空間：${id}（${count} 筆）` : `專屬空間：${id}`,
+        btnEmpties: '空瓶',
+        btnCloud: '雲端空間',
+        btnAdd: '新增',
+        wallLink: '成就牆',
+        statAll: '全部品項',
+        statOpened: '已開封',
+        statExpiring: '效期預警',
+        statLow: '低庫存',
+        searchPlaceholder: '搜尋品牌、品名、存放位置、色號或條碼...',
+        catAll: '全部',
+        catSkincare: '保養品',
+        catMakeup: '化妝品',
+        catDaily: '日用品',
+        allLocations: '全部位置',
+        modalAddTitle: '新增庫存品項',
+        modalEditTitle: '編輯 / 查看品項詳情',
+        aiCardTitle: '智慧條碼查詢 & AI 視覺辨識',
+        aiCardDesc: '直接拍商品正面即可自動轉正建檔並帶入封面縮圖',
+        btnScanBarcode: '掃條碼',
+        btnGeminiScan: '✨ Gemini 辨識',
+        btnCloseScanner: '關閉相機掃描',
+        thumbTitle: '商品封面縮圖（自動轉正帶入 / 選填）',
+        thumbDesc: '使用 Gemini 辨識拍正面時會自動修正方向並帶入',
+        btnRetakeThumb: '重拍縮圖',
+        btnClearThumb: '清除',
+        lblCategory: '商品分類 *',
+        lblBarcode: '條碼編號',
+        phBarcode: '輸入或掃描',
+        btnLookup: '查詢',
+        lblBrand: '品牌名稱',
+        btnSwap: '⇄ 互換',
+        phBrand: '例：TOKIO INKARAMI、肌研',
+        lblName: '商品名稱 *',
+        phName: '完整品名與容量',
+        lblLocation: '存放位置',
+        locationHint: '點選快速填入或直接輸入自訂位置',
+        phLocation: '例：化妝台、浴室櫃、囤貨箱...',
+        presetLocations: [
+          { label: '💄 化妝台', val: '化妝台' },
+          { label: '🚿 浴室櫃', val: '浴室櫃' },
+          { label: '📦 囤貨箱', val: '囤貨箱' },
+          { label: '❄️ 冰箱冷藏', val: '冰箱冷藏' },
+          { label: '👜 隨身化妝包', val: '隨身化妝包' },
+          { label: '🛏️ 床頭櫃', val: '床頭櫃' }
+        ],
+        lblQty: '目前數量 *',
+        lblMinQty: '安全庫存',
+        phMinQty: '不提醒',
+        lblUnit: '單位',
+        phUnit: '瓶/罐/支',
+        defaultUnit: '瓶',
+        lblExp: '出廠有效期限 (EXP)',
+        lblPao: '開封後保質期 (PAO)',
+        pao0: '無限制 / 不計算',
+        pao3: '3 個月 (3M)',
+        pao6: '6 個月 (6M)',
+        pao12: '12 個月 (12M)',
+        pao18: '18 個月 (18M)',
+        pao24: '24 個月 (24M)',
+        lblOpenDate: '開封日期（已開封再填）',
+        lblNote: '色號 / 規格備註',
+        phNote: '例：#02 乾燥玫瑰 / 補充包',
+        btnCancel: '取消',
+        btnSave: '儲存品項',
+        finishModalTitle: '恭喜完食空瓶！記錄空瓶成就',
+        lblRating: '空瓶回購評價 *',
+        rateMustBuy: '💖 必回購',
+        rateGood: '👍 還不錯',
+        rateNoBuy: '🙅 不回購',
+        lblReviewNote: '空瓶記心得（選填）',
+        phReviewNote: '例：保濕度超棒、已回購第三瓶！',
+        btnConfirmEmpty: '🏆 收錄空瓶成就 (+1)',
+        emptiesWallTitle: '🏆 空瓶成就牆（空瓶記）',
+        emptiesWallSub: '見證每一瓶物盡其用的保養與美妝戰績',
+        statTotalEmpties: '累積空瓶數',
+        statMustBuy: '💖 必回購神品',
+        statCurrentRank: '目前成就稱號',
+        emptyWallNoneTitle: '還沒有空瓶紀錄喔！',
+        emptyWallNoneDesc: '當手邊的保養品或日用品用完時，點擊卡片上的「✨ 空瓶」即可收錄戰績',
+        emptyFinishedDate: (d) => `完食日：${d}`,
+        btnRestock: '+ 回購補貨',
+        settingsTitle: '專屬雲端空間 & 家庭共享',
+        lblLanguage: '介面語言 / Language',
+        privacyShieldTitle: '🔒 獨立資料保護機制已啟用',
+        privacyShieldDesc: '每支手機皆擁有獨立隨機空間代碼，確保個人庫存互不干擾；若要與家人共享，只需雙方填入相同的自訂空間代碼即可即時同步。',
+        lblSpaceCode: '我的專屬雲端空間代碼（家庭共享碼）',
+        phSpaceCode: '輸入或產生專屬空間代碼',
+        btnCopy: '複製',
+        btnGenSpace: '🎲 產生全新獨立空間代碼',
+        linkPrivacy: '隱私權政策',
+        advSettings: '進階伺服器連線設定',
+        lblWorkerUrl: 'AI 視覺與條碼 API 網址',
+        lblFirebaseUrl: 'Firebase Realtime Database 網址',
+        btnClose: '關閉',
+        btnSaveSync: '儲存並同步',
+        bannerEmptyStats: (n) => `· 累積空瓶 <b>${n}</b> 瓶`,
+        rankNextHint: (rem, next) => `再完食 ${rem} 瓶即可解鎖「${next}」稱號！`,
+        rankMaxHint: '已達成最高殿堂級空瓶成就稱號！',
+        ranks: ['🌱 美妝新手', '✨ 空瓶達人', '🔥 保養資深玩家', '👑 鐵皮王者', '💎 終極空瓶傳說'],
+        emptyListTitle: '目前沒有符合條件的品項',
+        emptyListDesc: '點擊右上角「+ 新增」，直接拍商品正面即可自動建檔',
+        badgeOpened: '已開封',
+        badgeLow: '低庫存',
+        btnCardEmpty: '✨ 空瓶',
+        expExpired: (d) => `已過期 (${d})`,
+        expExpiring: (days, d) => `剩 ${days} 天 (${d})`,
+        expNormal: (d) => `效期至 ${d}`,
+        scanSteps: [
+          '📸 正在自動轉正方向並最佳化影像...',
+          '🔍 Gemini AI 正在讀取瓶身文字與品牌...',
+          '🏷️ 正在自動判斷分類與開封保質期...',
+          '✨ 即將完成建檔...'
+        ],
+        scanSuccess: (sec) => `✨ <b class="text-emerald-700">Gemini AI 視覺辨識完成！（耗時 ${sec} 秒）</b>`,
+        scanFail: (msg) => `⚠️ <b class="text-rose-600">Gemini 辨識失敗：</b>${msg}`,
+        barcodeSearching: (code) => `🔍 正在查詢條碼 <b>${code}</b>...`,
+        barcodeSourceCloudLocked: '群眾共享條碼庫（🔒 已驗證標準資料）',
+        barcodeSourceCloud: '群眾共享條碼庫',
+        barcodeSourceLocal: '本機記憶庫',
+        barcodeApplied: (src) => `⚡ 已從 <b>${src}</b> 帶入完整商品資料！`,
+        barcodeApiApplied: (src) => `✨ 已從 <b>${src}</b> 查詢並由 AI 自動整理完成！`,
+        barcodeNotFound: 'ℹ️ 資料庫尚無此條碼紀錄，建議直接點擊上方 <b>「✨ Gemini 辨識」</b> 拍正面建檔！',
+        alertCameraFail: '無法開啟相機，請確認瀏覽器相機權限或手動輸入條碼。',
+        confirmDelete: '確定要直接刪除這筆紀錄嗎？（若已用完請點「✨ 空瓶」可累積成就）',
+        alertCopied: (code) => `已複製空間代碼：${code}\n傳給家人貼上即可共同管理同一份庫存！`,
+        confirmNewSpace: '產生新空間代碼後，畫面會切換至全新空白雲端空間（原空間資料仍保留在雲端）。確定產生嗎？'
+      },
+      'en': {
+        appTitle: 'Beauty & Home Stock',
+        syncLoading: 'Loading personal cloud space...',
+        syncLocal: 'Offline Mode',
+        syncSpace: (id, count) => count !== null ? `Space: ${id} (${count})` : `Space: ${id}`,
+        btnEmpties: 'Empties',
+        btnCloud: 'Cloud',
+        btnAdd: 'Add',
+        wallLink: 'Wall',
+        statAll: 'All Items',
+        statOpened: 'Opened',
+        statExpiring: 'Expiring',
+        statLow: 'Low Stock',
+        searchPlaceholder: 'Search brand, name, location, shade, or barcode...',
+        catAll: 'All',
+        catSkincare: 'Skincare',
+        catMakeup: 'Makeup',
+        catDaily: 'Daily Care',
+        allLocations: 'All Locations',
+        modalAddTitle: 'Add Inventory Item',
+        modalEditTitle: 'Edit / View Item Details',
+        aiCardTitle: 'Smart Barcode Lookup & AI Vision',
+        aiCardDesc: 'Snap the front label to auto-fill details & cover photo',
+        btnScanBarcode: 'Scan Barcode',
+        btnGeminiScan: '✨ Gemini AI Scan',
+        btnCloseScanner: 'Close Scanner',
+        thumbTitle: 'Product Cover Photo (Auto-rotated / Optional)',
+        thumbDesc: 'Automatically captured & oriented when using Gemini Scan',
+        btnRetakeThumb: 'Retake',
+        btnClearThumb: 'Clear',
+        lblCategory: 'Category *',
+        lblBarcode: 'Barcode',
+        phBarcode: 'Enter or scan',
+        btnLookup: 'Lookup',
+        lblBrand: 'Brand Name',
+        btnSwap: '⇄ Swap',
+        phBrand: 'e.g. CeraVe, Laneige, Shiseido',
+        lblName: 'Product Name *',
+        phName: 'Full product name & volume',
+        lblLocation: 'Storage Location',
+        locationHint: 'Tap a preset or type a custom spot',
+        phLocation: 'e.g. Vanity, Bathroom Cabinet, Bin...',
+        presetLocations: [
+          { label: '💄 Vanity', val: 'Vanity' },
+          { label: '🚿 Bathroom', val: 'Bathroom' },
+          { label: '📦 Stock Bin', val: 'Stock Bin' },
+          { label: '❄️ Fridge', val: 'Fridge' },
+          { label: '👜 Pouch', val: 'Pouch' },
+          { label: '🛏️ Nightstand', val: 'Nightstand' }
+        ],
+        lblQty: 'Quantity *',
+        lblMinQty: 'Low Alert',
+        phMinQty: 'None',
+        lblUnit: 'Unit',
+        phUnit: 'btl/jar/pc',
+        defaultUnit: 'pc',
+        lblExp: 'Expiry Date (EXP)',
+        lblPao: 'Period After Opening (PAO)',
+        pao0: 'No Limit / N/A',
+        pao3: '3 Months (3M)',
+        pao6: '6 Months (6M)',
+        pao12: '12 Months (12M)',
+        pao18: '18 Months (18M)',
+        pao24: '24 Months (24M)',
+        lblOpenDate: 'Opened Date (If opened)',
+        lblNote: 'Shade / Variant Note',
+        phNote: 'e.g. #02 Rose / Refill Pack',
+        btnCancel: 'Cancel',
+        btnSave: 'Save Item',
+        finishModalTitle: 'Empty Finished! Log Achievement',
+        lblRating: 'Repurchase Verdict *',
+        rateMustBuy: '💖 Holy Grail',
+        rateGood: '👍 Pretty Good',
+        rateNoBuy: '🙅 Won’t Rebuy',
+        lblReviewNote: 'Empty Review Note (Optional)',
+        phReviewNote: 'e.g. Super hydrating, already on my 3rd bottle!',
+        btnConfirmEmpty: '🏆 Log Empty (+1)',
+        emptiesWallTitle: '🏆 Empties Achievement Wall',
+        emptiesWallSub: 'Celebrate every bottle finished to the last drop',
+        statTotalEmpties: 'Total Empties',
+        statMustBuy: '💖 Holy Grails',
+        statCurrentRank: 'Current Rank',
+        emptyWallNoneTitle: 'No empties logged yet!',
+        emptyWallNoneDesc: 'Tap "✨ Empty" on any finished product card to log your empties',
+        emptyFinishedDate: (d) => `Finished: ${d}`,
+        btnRestock: '+ Restock',
+        settingsTitle: 'Personal Cloud Space & Sharing',
+        lblLanguage: 'Language / 介面語言',
+        privacyShieldTitle: '🔒 Private Space Isolation Active',
+        privacyShieldDesc: 'Each device gets a unique random space code to keep inventories private. Share the same code with family members to sync together.',
+        lblSpaceCode: 'My Cloud Space Code (Family Sync)',
+        phSpaceCode: 'Enter or generate space code',
+        btnCopy: 'Copy',
+        btnGenSpace: '🎲 Generate New Space Code',
+        linkPrivacy: 'Privacy Policy',
+        advSettings: 'Advanced Server Settings',
+        lblWorkerUrl: 'AI Vision & Barcode API URL',
+        lblFirebaseUrl: 'Firebase Realtime Database URL',
+        btnClose: 'Close',
+        btnSaveSync: 'Save & Sync',
+        bannerEmptyStats: (n) => `· <b>${n}</b> Empties`,
+        rankNextHint: (rem, next) => `Finish ${rem} more to unlock "${next}"!`,
+        rankMaxHint: 'Maximum legendary empties rank achieved!',
+        ranks: ['🌱 Beauty Rookie', '✨ Empties Pro', '🔥 Skincare Enthusiast', '👑 Panning Royalty', '💎 Ultimate Legend'],
+        emptyListTitle: 'No matching items found',
+        emptyListDesc: 'Tap "+ Add" above and snap the front label to auto-log',
+        badgeOpened: 'Opened',
+        badgeLow: 'Low Stock',
+        btnCardEmpty: '✨ Empty',
+        expExpired: (d) => `Expired (${d})`,
+        expExpiring: (days, d) => `${days}d left (${d})`,
+        expNormal: (d) => `Exp ${d}`,
+        scanSteps: [
+          '📸 Auto-orienting & optimizing image...',
+          '🔍 Gemini AI reading label text & brand...',
+          '🏷️ Detecting category & PAO shelf life...',
+          '✨ Finishing up...'
+        ],
+        scanSuccess: (sec) => `✨ <b class="text-emerald-700">Gemini AI Scan Complete! (${sec}s)</b>`,
+        scanFail: (msg) => `⚠️ <b class="text-rose-600">Scan Failed:</b> ${msg}`,
+        barcodeSearching: (code) => `🔍 Looking up barcode <b>${code}</b>...`,
+        barcodeSourceCloudLocked: 'Shared Barcode DB (🔒 Verified)',
+        barcodeSourceCloud: 'Shared Barcode DB',
+        barcodeSourceLocal: 'Local Cache',
+        barcodeApplied: (src) => `⚡ Auto-filled from <b>${src}</b>!`,
+        barcodeApiApplied: (src) => `✨ Found via <b>${src}</b> & formatted by AI!`,
+        barcodeNotFound: 'ℹ️ Barcode not in database yet. Tap <b>"✨ Gemini AI Scan"</b> above to snap & auto-fill!',
+        alertCameraFail: 'Unable to open camera. Please check browser permissions or enter barcode manually.',
+        confirmDelete: 'Delete this item directly? (Tip: Use "✨ Empty" if you finished it to earn achievement points)',
+        alertCopied: (code) => `Copied Space Code: ${code}\nShare this code with family to manage the same inventory!`,
+        confirmNewSpace: 'Generate a new blank cloud space? (Your existing cloud space data will remain safe in the cloud)'
+      }
+    };
+
+    function detectInitialLanguage() {
+      const saved = localStorage.getItem('beauty_app_lang');
+      if (saved === 'zh-TW' || saved === 'en') return saved;
+      const sysLang = (navigator.language || '').toLowerCase();
+      return sysLang.startsWith('zh') ? 'zh-TW' : 'en';
+    }
+
+    let currentLang = detectInitialLanguage();
+
+    function t(key, ...args) {
+      const dict = I18N[currentLang] || I18N['zh-TW'];
+      const val = dict[key] !== undefined ? dict[key] : I18N['zh-TW'][key];
+      return typeof val === 'function' ? val(...args) : val;
+    }
+
+    function translateCategory(catVal) {
+      if (catVal === '保養品') return t('catSkincare');
+      if (catVal === '化妝品') return t('catMakeup');
+      if (catVal === '日用品') return t('catDaily');
+      return catVal || t('catSkincare');
+    }
+
+    function translateRating(ratingVal) {
+      if (!ratingVal) return t('rateMustBuy');
+      if (ratingVal.includes('必回購')) return t('rateMustBuy');
+      if (ratingVal.includes('還不錯')) return t('rateGood');
+      if (ratingVal.includes('不回購')) return t('rateNoBuy');
+      return ratingVal;
+    }
+
+    function applyTranslations() {
+      document.documentElement.lang = currentLang;
+      document.title = t('appTitle');
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const text = t(key);
+        if (typeof text === 'string') el.textContent = text;
+      });
+
+      // 更新輸入框 Placeholder
+      document.getElementById('searchInput').placeholder = t('searchPlaceholder');
+      document.getElementById('itemBarcode').placeholder = t('phBarcode');
+      document.getElementById('itemBrand').placeholder = t('phBrand');
+      document.getElementById('itemName').placeholder = t('phName');
+      document.getElementById('itemLocation').placeholder = t('phLocation');
+      document.getElementById('itemMinQty').placeholder = t('phMinQty');
+      document.getElementById('itemUnit').placeholder = t('phUnit');
+      document.getElementById('itemNote').placeholder = t('phNote');
+      document.getElementById('finishReviewNote').placeholder = t('phReviewNote');
+      document.getElementById('settingSpaceId').placeholder = t('phSpaceCode');
+
+      // 渲染預設存放位置快捷按鈕
+      const presetWrap = document.getElementById('presetLocationButtons');
+      if (presetWrap) {
+        presetWrap.innerHTML = t('presetLocations').map(p => `
+          <button type="button" onclick="selectPresetLocation('${p.val.replace(/'/g, "\\'")}')"
+            class="px-2.5 py-1 rounded-lg bg-white hover:bg-sky-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">
+            ${p.label}
+          </button>
+        `).join('');
+      }
+
+      // 更新語言切換按鈕樣式
+      const toggleBtn = document.getElementById('langToggleBtn');
+      if (toggleBtn) toggleBtn.textContent = currentLang === 'zh-TW' ? 'EN' : '繁中';
+
+      const optZh = document.getElementById('langOptZh');
+      const optEn = document.getElementById('langOptEn');
+      if (optZh && optEn) {
+        optZh.className = currentLang === 'zh-TW'
+          ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-2xs'
+          : 'px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-200';
+        optEn.className = currentLang === 'en'
+          ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-2xs'
+          : 'px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-200';
+      }
+
+      // 同步狀態列文字更新
+      const { spaceId } = getFirebaseConfig();
+      const syncTxt = document.getElementById('syncStatusText');
+      if (syncTxt && spaceId) {
+        syncTxt.textContent = t('syncSpace', spaceId, inventory.length);
+      }
+
+      updateStatFilterUI();
+      renderLocationTabs();
+      renderItems();
+      updateEmptyAchievementsUI();
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('beauty_app_lang', lang);
+      applyTranslations();
+    }
+
+    function toggleLanguage() {
+      setLanguage(currentLang === 'zh-TW' ? 'en' : 'zh-TW');
+    }
+
+    // ==================== 核心狀態與儲存設定 ====================
 
     let inventory = [];
     let emptiesList = [];
     let localBarcodeMemory = JSON.parse(localStorage.getItem('beauty_barcode_memory') || localStorage.getItem('barcode_cache') || '{}');
     let currentCategory = '全部';
-    let currentLocationFilter = '全部位置';
+    let currentLocationFilter = 'ALL_LOCATIONS';
     let currentFilter = 'all';
     let html5QrCode = null;
     let activeRoomWriteUrl = '';
     let activeEmptiesWriteUrl = '';
 
-    // 註冊 PWA Service Worker（Google Play TWA 打包必要條件）
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').catch(() => {});
       });
     }
 
-    // 產生用戶專屬隨機空間代碼（隔離陌生使用者資料）
     function createUniqueSpaceId() {
       const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
       let rand = '';
@@ -586,14 +964,10 @@
       ensurePersonalSpaceId();
       inventory = loadMergedLocalInventory();
       emptiesList = loadLocalEmpties();
-      updateStatFilterUI();
-      renderLocationTabs();
-      renderItems();
-      updateEmptyAchievementsUI();
+      applyTranslations();
       syncFromFirebase();
     });
 
-    // 精準讀取當前使用者專屬空間（確保多用戶隱私隔離）
     async function syncFromFirebase() {
       const { dbUrl, spaceId } = getFirebaseConfig();
       const dot = document.getElementById('syncStatusDot');
@@ -601,7 +975,7 @@
 
       if (!dbUrl || !spaceId) {
         dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-        txt.textContent = '本機模式';
+        txt.textContent = t('syncLocal');
         return;
       }
 
@@ -640,17 +1014,16 @@
             updateEmptyAchievementsUI();
 
             dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-            txt.textContent = `專屬空間：${spaceId}（${inventory.length} 筆）`;
+            txt.textContent = t('syncSpace', spaceId, inventory.length);
             return;
           }
         }
       } catch (e) {}
 
-      // 全新空間尚未有任何資料時，初始化寫入路徑
       activeRoomWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}/items`;
       activeEmptiesWriteUrl = `${dbUrl}/beauty_stock_rooms/${encodeURIComponent(spaceId)}/empties`;
       dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-      txt.textContent = `專屬空間：${spaceId}`;
+      txt.textContent = t('syncSpace', spaceId, null);
     }
 
     async function pushToFirebase(item) {
@@ -705,7 +1078,6 @@
         const res = await fetch(endpoint);
         const existing = res.ok ? await res.json() : null;
 
-        // 情況 1：雲端尚無此條碼 -> 建立初始草稿（第 1 票，未鎖定）
         if (!existing || !existing.name) {
           const initialRecord = {
             ...newMeta,
@@ -724,20 +1096,17 @@
           return;
         }
 
-        // 情況 2：已達多數共識並鎖定 -> 保護標準資料不被覆蓋，僅保留使用者個人庫存
         if (existing.locked === true) {
           localBarcodeMemory[barcode] = existing;
           localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
           return;
         }
 
-        // 情況 3：尚未鎖定 -> 比對品牌與品名是否與現有草稿一致
         const isSameProduct =
           normalizeBarcodeText(existing.brand) === normalizeBarcodeText(newMeta.brand) &&
           normalizeBarcodeText(existing.name) === normalizeBarcodeText(newMeta.name);
 
         if (isSameProduct) {
-          // 同一商品不同空間確認 -> 累加贊成票數，達門檻即鎖定
           const voters = { ...(existing.voters || {}), [spaceId]: true };
           const confirmCount = Object.keys(voters).length;
           const locked = confirmCount >= BARCODE_CONSENSUS_THRESHOLD;
@@ -759,7 +1128,6 @@
           localBarcodeMemory[barcode] = updatedRecord;
           localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
         } else {
-          // 尚未鎖定且發現資料不同 -> 允許糾錯覆蓋，並以新版本重新累計第 1 票
           const correctedRecord = {
             ...newMeta,
             confirmCount: 1,
@@ -798,26 +1166,30 @@
 
       if (locations.length === 0) {
         bar.innerHTML = '';
-        currentLocationFilter = '全部位置';
+        currentLocationFilter = 'ALL_LOCATIONS';
         return;
       }
 
-      if (currentLocationFilter !== '全部位置' && !locations.includes(currentLocationFilter)) {
-        currentLocationFilter = '全部位置';
+      if (currentLocationFilter !== 'ALL_LOCATIONS' && !locations.includes(currentLocationFilter)) {
+        currentLocationFilter = 'ALL_LOCATIONS';
       }
 
-      const tabs = ['全部位置', ...locations];
-      bar.innerHTML = tabs.map(loc => {
-        const active = loc === currentLocationFilter;
+      const tabs = [
+        { key: 'ALL_LOCATIONS', label: t('allLocations') },
+        ...locations.map(l => ({ key: l, label: l }))
+      ];
+
+      bar.innerHTML = tabs.map(tab => {
+        const active = tab.key === currentLocationFilter;
         return `
-          <button onclick="setLocationFilter('${loc.replace(/'/g, "\\'")}')"
+          <button onclick="setLocationFilter('${tab.key.replace(/'/g, "\\'")}')"
             class="px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
               active
                 ? 'bg-sky-600 text-white shadow-2xs ring-2 ring-sky-300'
                 : 'bg-sky-50 text-sky-700 border border-sky-200/80 hover:bg-sky-100'
             }">
             <i class="fa-solid fa-location-dot text-[10px]"></i>
-            <span>${loc}</span>
+            <span>${tab.label}</span>
           </button>`;
       }).join('');
     }
@@ -825,11 +1197,12 @@
     // ==================== 空瓶成就系統邏輯 ====================
 
     function getRankInfo(count) {
-      if (count >= 50) return { title: '💎 終極空瓶傳說', next: null, base: 50, target: 50 };
-      if (count >= 25) return { title: '👑 鐵皮王者', next: '💎 終極空瓶傳說', base: 25, target: 50 };
-      if (count >= 10) return { title: '🔥 保養資深玩家', next: '👑 鐵皮王者', base: 10, target: 25 };
-      if (count >= 3)  return { title: '✨ 空瓶達人', next: '🔥 保養資深玩家', base: 3, target: 10 };
-      return { title: '🌱 美妝新手', next: '✨ 空瓶達人', base: 0, target: 3 };
+      const names = t('ranks');
+      if (count >= 50) return { title: names[4], next: null, base: 50, target: 50 };
+      if (count >= 25) return { title: names[3], next: names[4], base: 25, target: 50 };
+      if (count >= 10) return { title: names[2], next: names[3], base: 10, target: 25 };
+      if (count >= 3)  return { title: names[1], next: names[2], base: 3, target: 10 };
+      return { title: names[0], next: names[1], base: 0, target: 3 };
     }
 
     function updateEmptyAchievementsUI() {
@@ -837,16 +1210,16 @@
       const rank = getRankInfo(total);
 
       document.getElementById('headerEmptyCount').textContent = total;
-      document.getElementById('bannerEmptyTotal').textContent = total;
+      document.getElementById('bannerEmptyStats').innerHTML = t('bannerEmptyStats', total);
       document.getElementById('rankBadgeTitle').textContent = rank.title;
 
       if (rank.next) {
         const pct = Math.min(100, Math.max(8, Math.round(((total - rank.base) / (rank.target - rank.base)) * 100)));
         document.getElementById('rankProgressBar').style.width = `${pct}%`;
-        document.getElementById('rankNextHint').textContent = `再完食 ${rank.target - total} 瓶即可解鎖「${rank.next}」稱號！`;
+        document.getElementById('rankNextHint').textContent = t('rankNextHint', rank.target - total, rank.next);
       } else {
         document.getElementById('rankProgressBar').style.width = '100%';
-        document.getElementById('rankNextHint').textContent = '已達成最高殿堂級空瓶成就稱號！';
+        document.getElementById('rankNextHint').textContent = t('rankMaxHint');
       }
     }
 
@@ -855,7 +1228,7 @@
       if (!item) return;
 
       document.getElementById('finishItemId').value = item.id;
-      document.getElementById('finishItemBrand').textContent = item.brand || item.category || '';
+      document.getElementById('finishItemBrand').textContent = item.brand || translateCategory(item.category);
       document.getElementById('finishItemName').textContent = item.name;
       document.getElementById('finishReviewNote').value = '';
 
@@ -934,8 +1307,8 @@
         container.innerHTML = `
           <div class="text-center py-10 space-y-2">
             <div class="text-4xl">🍾</div>
-            <div class="text-sm font-bold text-slate-700">還沒有空瓶紀錄喔！</div>
-            <div class="text-xs text-slate-400">當手邊的保養品或日用品用完時，點擊卡片上的「✨ 空瓶」即可收錄戰績</div>
+            <div class="text-sm font-bold text-slate-700">${t('emptyWallNoneTitle')}</div>
+            <div class="text-xs text-slate-400">${t('emptyWallNoneDesc')}</div>
           </div>`;
       } else {
         container.innerHTML = emptiesList.map(rec => `
@@ -947,17 +1320,17 @@
             </div>
             <div class="flex-1 min-w-0 space-y-0.5">
               <div class="flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">${rec.rating || '💖 必回購'}</span>
-                <span class="text-[11px] font-bold text-slate-500 truncate">${rec.brand || rec.category}</span>
+                <span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">${translateRating(rec.rating)}</span>
+                <span class="text-[11px] font-bold text-slate-500 truncate">${rec.brand || translateCategory(rec.category)}</span>
               </div>
               <div class="text-xs font-bold text-slate-800 truncate">${rec.name}</div>
               <div class="text-[11px] text-slate-500 truncate">
-                完食日：${rec.finishedDate || ''} ${rec.review ? `· 「${rec.review}」` : ''}
+                ${t('emptyFinishedDate', rec.finishedDate || '')} ${rec.review ? `· "${rec.review}"` : ''}
               </div>
             </div>
             <button onclick='restockFromEmpty(${JSON.stringify(rec).replace(/'/g, "&#39;")})'
               class="px-2.5 py-1.5 rounded-xl bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-[11px] font-bold shrink-0">
-              + 回購補貨
+              ${t('btnRestock')}
             </button>
           </div>
         `).join('');
@@ -1021,7 +1394,7 @@
         const img = await new Promise((resolve, reject) => {
           const image = new Image();
           image.onload = () => resolve(image);
-          image.onerror = () => reject(new Error('圖片載入失敗'));
+          image.onerror = () => reject(new Error('Image load failed'));
           image.src = blobUrl;
         });
 
@@ -1099,12 +1472,7 @@
     }
 
     function startScanProgress(statusEl) {
-      const steps = [
-        '📸 正在自動轉正方向並最佳化影像...',
-        '🔍 Gemini AI 正在讀取瓶身文字與品牌...',
-        '🏷️ 正在自動判斷分類與開封保質期...',
-        '✨ 即將完成建檔...'
-      ];
+      const steps = t('scanSteps');
       let stepIdx = 0;
       const startTime = performance.now();
       statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-indigo-600 mr-1"></i> ${steps[0]}`;
@@ -1144,7 +1512,7 @@
 
         const json = await res.json();
         if (!res.ok || !json.success) {
-          throw new Error(json.error || `伺服器回應錯誤 (${res.status})`);
+          throw new Error(json.error || `HTTP ${res.status}`);
         }
 
         const item = json.data || {};
@@ -1164,10 +1532,10 @@
         }
 
         const elapsed = stopProgress();
-        statusText.innerHTML = `✨ <b class="text-emerald-700">Gemini AI 視覺辨識完成！（耗時 ${elapsed} 秒）</b>`;
+        statusText.innerHTML = t('scanSuccess', elapsed);
       } catch (err) {
         stopProgress();
-        statusText.innerHTML = `⚠️ <b class="text-rose-600">Gemini 辨識失敗：</b>${err.message}`;
+        statusText.innerHTML = t('scanFail', err.message);
       } finally {
         event.target.value = '';
       }
@@ -1211,9 +1579,8 @@
       const statusBox = document.getElementById('ocrResultBox');
       const statusText = document.getElementById('ocrStatusText');
       statusBox.classList.remove('hidden');
-      statusText.innerHTML = `🔍 正在查詢條碼 <b>${code}</b>...`;
+      statusText.innerHTML = t('barcodeSearching', code);
 
-      // 優先讀取雲端群眾共享條碼庫以取得最新共識版本
       const { dbUrl } = getFirebaseConfig();
       if (dbUrl) {
         try {
@@ -1223,7 +1590,7 @@
             if (fbData && fbData.name) {
               localBarcodeMemory[code] = fbData;
               localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
-              const badge = fbData.locked ? '群眾共享條碼庫（🔒 已驗證標準資料）' : '群眾共享條碼庫';
+              const badge = fbData.locked ? t('barcodeSourceCloudLocked') : t('barcodeSourceCloud');
               applyBarcodeRecord(fbData, badge);
               return;
             }
@@ -1232,7 +1599,7 @@
       }
 
       if (localBarcodeMemory[code]) {
-        applyBarcodeRecord(localBarcodeMemory[code], '本機記憶庫');
+        applyBarcodeRecord(localBarcodeMemory[code], t('barcodeSourceLocal'));
         return;
       }
 
@@ -1263,13 +1630,13 @@
             localStorage.setItem('beauty_barcode_memory', JSON.stringify(localBarcodeMemory));
             await syncBarcodeWithConsensus(code, meta);
 
-            statusText.innerHTML = `✨ 已從 <b>${data.source}</b> 查詢並由 AI 自動整理完成！`;
+            statusText.innerHTML = t('barcodeApiApplied', data.source);
             return;
           }
         }
       } catch (e) {}
 
-      statusText.innerHTML = `ℹ️ 資料庫尚無此條碼紀錄，建議直接點擊上方 <b>「✨ Gemini 辨識」</b> 拍正面建檔！`;
+      statusText.innerHTML = t('barcodeNotFound');
     }
 
     function applyBarcodeRecord(rec, sourceLabel) {
@@ -1277,7 +1644,7 @@
       if (rec.name) document.getElementById('itemName').value = rec.name;
       if (rec.category) document.getElementById('itemCategory').value = rec.category;
       if (rec.pao !== undefined) document.getElementById('itemPao').value = String(rec.pao);
-      document.getElementById('ocrStatusText').innerHTML = `⚡ 已從 <b>${sourceLabel}</b> 帶入完整商品資料！`;
+      document.getElementById('ocrStatusText').innerHTML = t('barcodeApplied', sourceLabel);
     }
 
     function startBarcodeScanner() {
@@ -1295,7 +1662,7 @@
         () => {}
       ).catch(() => {
         container.classList.add('hidden');
-        alert('無法開啟相機，請確認瀏覽器相機權限或手動輸入條碼。');
+        alert(t('alertCameraFail'));
       });
     }
 
@@ -1320,7 +1687,7 @@
       setThumbPreview('');
 
       if (item) {
-        document.getElementById('modalTitle').textContent = '編輯 / 查看品項詳情';
+        document.getElementById('modalTitle').textContent = t('modalEditTitle');
         document.getElementById('editItemId').value = item.id;
         document.getElementById('itemCategory').value = item.category || '保養品';
         document.getElementById('itemBarcode').value = item.barcode || '';
@@ -1329,15 +1696,16 @@
         document.getElementById('itemLocation').value = item.location || '';
         document.getElementById('itemQty').value = item.qty ?? 1;
         document.getElementById('itemMinQty').value = item.minQty ?? '';
-        document.getElementById('itemUnit').value = item.unit || '瓶';
+        document.getElementById('itemUnit').value = item.unit || t('defaultUnit');
         document.getElementById('itemExpDate').value = item.expDate || '';
         document.getElementById('itemPao').value = String(item.pao ?? 12);
         document.getElementById('itemOpenDate').value = item.openDate || '';
         document.getElementById('itemNote').value = item.note || '';
         if (item.photo) setThumbPreview(item.photo);
       } else {
-        document.getElementById('modalTitle').textContent = '新增庫存品項';
+        document.getElementById('modalTitle').textContent = t('modalAddTitle');
         document.getElementById('editItemId').value = '';
+        document.getElementById('itemUnit').value = t('defaultUnit');
       }
       document.getElementById('itemModal').classList.remove('hidden');
     }
@@ -1366,7 +1734,7 @@
         location,
         qty: parseInt(document.getElementById('itemQty').value || '0', 10),
         minQty: document.getElementById('itemMinQty').value !== '' ? parseInt(document.getElementById('itemMinQty').value, 10) : null,
-        unit: document.getElementById('itemUnit').value.trim() || '瓶',
+        unit: document.getElementById('itemUnit').value.trim() || t('defaultUnit'),
         expDate: document.getElementById('itemExpDate').value,
         pao,
         openDate: document.getElementById('itemOpenDate').value,
@@ -1411,7 +1779,7 @@
     }
 
     async function removeItem(id) {
-      if (!confirm('確定要直接刪除這筆紀錄嗎？（若已用完請點「✨ 空瓶」可累積成就）')) return;
+      if (!confirm(t('confirmDelete'))) return;
       inventory = inventory.filter(x => x.id !== id);
       saveLocalInventory();
       renderLocationTabs();
@@ -1436,9 +1804,9 @@
       const diffDays = Math.ceil((earliest - today) / (1000 * 60 * 60 * 24));
       const dateStr = earliest.toISOString().split('T')[0];
 
-      if (diffDays < 0) return { status: 'expired', label: `已過期 (${dateStr})` };
-      if (diffDays <= 60) return { status: 'expiring', label: `剩 ${diffDays} 天 (${dateStr})` };
-      return { status: 'normal', label: `效期至 ${dateStr}` };
+      if (diffDays < 0) return { status: 'expired', label: t('expExpired', dateStr) };
+      if (diffDays <= 60) return { status: 'expiring', label: t('expExpiring', diffDays, dateStr) };
+      return { status: 'normal', label: t('expNormal', dateStr) };
     }
 
     function setCategory(cat) {
@@ -1453,7 +1821,6 @@
       renderItems();
     }
 
-    // 更新四宮格統計卡片選中粗框樣式
     function updateStatFilterUI() {
       const styles = {
         all: {
@@ -1518,7 +1885,7 @@
 
       const filtered = inventory.filter(item => {
         if (currentCategory !== '全部' && item.category !== currentCategory) return false;
-        if (currentLocationFilter !== '全部位置' && (item.location || '').trim() !== currentLocationFilter) return false;
+        if (currentLocationFilter !== 'ALL_LOCATIONS' && (item.location || '').trim() !== currentLocationFilter) return false;
 
         const exp = getExpiryStatus(item);
         if (currentFilter === 'opened' && !item.openDate) return false;
@@ -1537,8 +1904,8 @@
         listEl.innerHTML = `
           <div class="bg-white rounded-3xl p-8 text-center border border-slate-100 space-y-2">
             <div class="text-3xl">🧴</div>
-            <div class="text-sm font-bold text-slate-700">目前沒有符合條件的品項</div>
-            <div class="text-xs text-slate-400">點擊右上角「+ 新增」，直接拍商品正面即可自動建檔</div>
+            <div class="text-sm font-bold text-slate-700">${t('emptyListTitle')}</div>
+            <div class="text-xs text-slate-400">${t('emptyListDesc')}</div>
           </div>`;
         return;
       }
@@ -1565,14 +1932,14 @@
 
             <div class="flex-1 min-w-0 space-y-1">
               <div class="flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold shrink-0">${item.category || '保養品'}</span>
+                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold shrink-0">${translateCategory(item.category)}</span>
                 ${item.location ? `<span class="px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200/60 text-[10px] font-bold shrink-0">📍 ${item.location}</span>` : ''}
                 ${item.brand ? `<span class="text-xs font-bold text-rose-600 truncate">${item.brand}</span>` : ''}
               </div>
               <div class="text-sm font-bold text-slate-800 truncate">${item.name}</div>
               <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                ${item.openDate ? `<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">已開封</span>` : ''}
-                ${isLow ? `<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-bold">低庫存</span>` : ''}
+                ${item.openDate ? `<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">${t('badgeOpened')}</span>` : ''}
+                ${isLow ? `<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-bold">${t('badgeLow')}</span>` : ''}
                 ${expBadge}
                 ${item.note ? `<span class="text-slate-400 truncate">· ${item.note}</span>` : ''}
               </div>
@@ -1581,12 +1948,12 @@
             <div onclick="event.stopPropagation()" class="flex flex-col items-end gap-1.5 shrink-0">
               <div class="flex items-center gap-1.5 bg-slate-50 rounded-xl p-1 border border-slate-200/70">
                 <button type="button" onclick="adjustQty('${item.id}', -1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">-</button>
-                <span class="text-xs font-extrabold min-w-[2.2rem] text-center">${item.qty ?? 1}${item.unit || '瓶'}</span>
+                <span class="text-xs font-extrabold min-w-[2.2rem] text-center">${item.qty ?? 1}${item.unit || t('defaultUnit')}</span>
                 <button type="button" onclick="adjustQty('${item.id}', 1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">+</button>
               </div>
               <div class="flex items-center gap-2 text-xs">
                 <button type="button" onclick="openFinishBottleModal('${item.id}')" class="px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-700 font-bold text-[11px]">
-                  ✨ 空瓶
+                  ${t('btnCardEmpty')}
                 </button>
                 <button type="button" onclick='openItemModal(${itemJsonAttr})' class="text-slate-400 hover:text-indigo-600"><i class="fa-solid fa-pen"></i></button>
                 <button type="button" onclick="removeItem('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button>
@@ -1612,11 +1979,11 @@
       const code = document.getElementById('settingSpaceId').value.trim();
       if (!code) return;
       navigator.clipboard?.writeText(code);
-      alert(`已複製空間代碼：${code}\n傳給家人貼上即可共同管理同一份庫存！`);
+      alert(t('alertCopied', code));
     }
 
     function generateNewRandomSpace() {
-      if (!confirm('產生新空間代碼後，畫面會切換至全新空白雲端空間（原空間資料仍保留在雲端）。確定產生嗎？')) return;
+      if (!confirm(t('confirmNewSpace'))) return;
       document.getElementById('settingSpaceId').value = createUniqueSpaceId();
     }
 
@@ -1630,7 +1997,6 @@
       localStorage.setItem('beauty_fb_url', fUrl);
       localStorage.setItem('beauty_space_id', sId);
 
-      // 切換不同空間時清空記憶體舊清單再載入新空間資料
       inventory = [];
       emptiesList = [];
       saveLocalInventory();
