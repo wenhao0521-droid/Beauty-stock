@@ -466,6 +466,37 @@
     const EMPTIES_STORAGE_KEY = 'beauty_stock_empties';
     const BARCODE_CONSENSUS_THRESHOLD = 2;
 
+    // 常見存放位置雙語對照表（維持資料庫原始值，切換介面語言時自動顯示對應語言）
+    const LOCATION_DISPLAY_MAP = {
+      '化妝台': { 'zh-TW': '化妝台', 'en': 'Vanity' },
+      'vanity': { 'zh-TW': '化妝台', 'en': 'Vanity' },
+      '浴室櫃': { 'zh-TW': '浴室櫃', 'en': 'Bathroom' },
+      '浴室鏡櫃': { 'zh-TW': '浴室鏡櫃', 'en': 'Bathroom Cabinet' },
+      'bathroom': { 'zh-TW': '浴室櫃', 'en': 'Bathroom' },
+      'bathroom cabinet': { 'zh-TW': '浴室鏡櫃', 'en': 'Bathroom Cabinet' },
+      '囤貨箱': { 'zh-TW': '囤貨箱', 'en': 'Stock Bin' },
+      'stock bin': { 'zh-TW': '囤貨箱', 'en': 'Stock Bin' },
+      '冰箱冷藏': { 'zh-TW': '冰箱冷藏', 'en': 'Fridge' },
+      'fridge': { 'zh-TW': '冰箱冷藏', 'en': 'Fridge' },
+      '隨身化妝包': { 'zh-TW': '隨身化妝包', 'en': 'Pouch' },
+      'pouch': { 'zh-TW': '隨身化妝包', 'en': 'Pouch' },
+      '床頭櫃': { 'zh-TW': '床頭櫃', 'en': 'Nightstand' },
+      'nightstand': { 'zh-TW': '床頭櫃', 'en': 'Nightstand' }
+    };
+
+    // 常見數量單位雙語對照表
+    const UNIT_DISPLAY_MAP = {
+      '瓶': { 'zh-TW': '瓶', 'en': 'btl' },
+      '罐': { 'zh-TW': '罐', 'en': 'jar' },
+      '支': { 'zh-TW': '支', 'en': 'pc' },
+      '條': { 'zh-TW': '條', 'en': 'tube' },
+      '包': { 'zh-TW': '包', 'en': 'pk' },
+      '片': { 'zh-TW': '片', 'en': 'pc' },
+      '盒': { 'zh-TW': '盒', 'en': 'box' },
+      'pc': { 'zh-TW': '個', 'en': 'pc' },
+      'btl': { 'zh-TW': '瓶', 'en': 'btl' }
+    };
+
     // ==================== 多語系字典與設定 (i18n) ====================
     const I18N = {
       'zh-TW': {
@@ -756,6 +787,19 @@
       return catVal || t('catSkincare');
     }
 
+    function translateLocation(locVal) {
+      const clean = (locVal || '').trim();
+      if (!clean) return '';
+      const entry = LOCATION_DISPLAY_MAP[clean.toLowerCase()] || LOCATION_DISPLAY_MAP[clean];
+      return entry ? (entry[currentLang] || clean) : clean;
+    }
+
+    function translateUnit(unitVal) {
+      const clean = (unitVal || '').trim() || t('defaultUnit');
+      const entry = UNIT_DISPLAY_MAP[clean.toLowerCase()] || UNIT_DISPLAY_MAP[clean];
+      return entry ? (entry[currentLang] || clean) : clean;
+    }
+
     function translateRating(ratingVal) {
       if (!ratingVal) return t('rateMustBuy');
       if (ratingVal.includes('必回購')) return t('rateMustBuy');
@@ -774,7 +818,6 @@
         if (typeof text === 'string') el.textContent = text;
       });
 
-      // 更新輸入框 Placeholder
       document.getElementById('searchInput').placeholder = t('searchPlaceholder');
       document.getElementById('itemBarcode').placeholder = t('phBarcode');
       document.getElementById('itemBrand').placeholder = t('phBrand');
@@ -786,7 +829,6 @@
       document.getElementById('finishReviewNote').placeholder = t('phReviewNote');
       document.getElementById('settingSpaceId').placeholder = t('phSpaceCode');
 
-      // 渲染預設存放位置快捷按鈕
       const presetWrap = document.getElementById('presetLocationButtons');
       if (presetWrap) {
         presetWrap.innerHTML = t('presetLocations').map(p => `
@@ -797,7 +839,6 @@
         `).join('');
       }
 
-      // 更新語言切換按鈕樣式
       const toggleBtn = document.getElementById('langToggleBtn');
       if (toggleBtn) toggleBtn.textContent = currentLang === 'zh-TW' ? 'EN' : '繁中';
 
@@ -812,7 +853,6 @@
           : 'px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-200';
       }
 
-      // 同步狀態列文字更新
       const { spaceId } = getFirebaseConfig();
       const syncTxt = document.getElementById('syncStatusText');
       if (syncTxt && spaceId) {
@@ -1160,23 +1200,23 @@
 
     function renderLocationTabs() {
       const bar = document.getElementById('locationFilterBar');
-      const locations = Array.from(new Set(
+      const rawLocations = Array.from(new Set(
         inventory.map(it => (it.location || '').trim()).filter(Boolean)
       ));
 
-      if (locations.length === 0) {
+      if (rawLocations.length === 0) {
         bar.innerHTML = '';
         currentLocationFilter = 'ALL_LOCATIONS';
         return;
       }
 
-      if (currentLocationFilter !== 'ALL_LOCATIONS' && !locations.includes(currentLocationFilter)) {
+      if (currentLocationFilter !== 'ALL_LOCATIONS' && !rawLocations.includes(currentLocationFilter)) {
         currentLocationFilter = 'ALL_LOCATIONS';
       }
 
       const tabs = [
         { key: 'ALL_LOCATIONS', label: t('allLocations') },
-        ...locations.map(l => ({ key: l, label: l }))
+        ...rawLocations.map(l => ({ key: l, label: translateLocation(l) }))
       ];
 
       bar.innerHTML = tabs.map(tab => {
@@ -1350,7 +1390,7 @@
       document.getElementById('itemBrand').value = rec.brand || '';
       document.getElementById('itemName').value = rec.name || '';
       document.getElementById('itemBarcode').value = rec.barcode || '';
-      document.getElementById('itemLocation').value = rec.location || '';
+      document.getElementById('itemLocation').value = translateLocation(rec.location || '');
       if (rec.photo) setThumbPreview(rec.photo);
     }
 
@@ -1693,7 +1733,7 @@
         document.getElementById('itemBarcode').value = item.barcode || '';
         document.getElementById('itemBrand').value = item.brand || '';
         document.getElementById('itemName').value = item.name || '';
-        document.getElementById('itemLocation').value = item.location || '';
+        document.getElementById('itemLocation').value = translateLocation(item.location || '');
         document.getElementById('itemQty').value = item.qty ?? 1;
         document.getElementById('itemMinQty').value = item.minQty ?? '';
         document.getElementById('itemUnit').value = item.unit || t('defaultUnit');
@@ -1893,7 +1933,8 @@
         if (currentFilter === 'low' && !(item.minQty !== null && item.qty <= item.minQty)) return false;
 
         if (q) {
-          const hay = `${item.brand || ''} ${item.name || ''} ${item.location || ''} ${item.note || ''} ${item.barcode || ''}`.toLowerCase();
+          const locTranslated = translateLocation(item.location || '');
+          const hay = `${item.brand || ''} ${item.name || ''} ${item.location || ''} ${locTranslated} ${item.note || ''} ${item.barcode || ''}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         return true;
@@ -1920,6 +1961,8 @@
           : exp.label ? `<span class="text-slate-400">${exp.label}</span>` : '';
 
         const itemJsonAttr = JSON.stringify(item).replace(/'/g, "&#39;");
+        const displayLocation = translateLocation(item.location);
+        const displayUnit = translateUnit(item.unit);
 
         return `
           <div onclick='openItemModal(${itemJsonAttr})'
@@ -1933,7 +1976,7 @@
             <div class="flex-1 min-w-0 space-y-1">
               <div class="flex items-center gap-1.5">
                 <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold shrink-0">${translateCategory(item.category)}</span>
-                ${item.location ? `<span class="px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200/60 text-[10px] font-bold shrink-0">📍 ${item.location}</span>` : ''}
+                ${displayLocation ? `<span class="px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200/60 text-[10px] font-bold shrink-0">📍 ${displayLocation}</span>` : ''}
                 ${item.brand ? `<span class="text-xs font-bold text-rose-600 truncate">${item.brand}</span>` : ''}
               </div>
               <div class="text-sm font-bold text-slate-800 truncate">${item.name}</div>
@@ -1948,7 +1991,7 @@
             <div onclick="event.stopPropagation()" class="flex flex-col items-end gap-1.5 shrink-0">
               <div class="flex items-center gap-1.5 bg-slate-50 rounded-xl p-1 border border-slate-200/70">
                 <button type="button" onclick="adjustQty('${item.id}', -1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">-</button>
-                <span class="text-xs font-extrabold min-w-[2.2rem] text-center">${item.qty ?? 1}${item.unit || t('defaultUnit')}</span>
+                <span class="text-xs font-extrabold min-w-[2.2rem] text-center">${item.qty ?? 1}${displayUnit}</span>
                 <button type="button" onclick="adjustQty('${item.id}', 1)" class="w-6 h-6 rounded-lg bg-white text-slate-600 font-bold shadow-2xs">+</button>
               </div>
               <div class="flex items-center gap-2 text-xs">
